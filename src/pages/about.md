@@ -5,7 +5,7 @@ title: "About"
 
 ## Obed Macallums
 
-Geological Engineer, graduated from the Universidad de Oriente, Venezuela. Passionate about geomatics and technology, currently serving as a support engineer specializing in software development at Geocom. Focused on solving engineering problems using the latest software creation technologies. Skilled in working with various programming languages and experienced in handling, processing, and analyzing geospatial data.
+A dedicated Geological Engineer and Software Developer with a passion for geomatics and technology, currently serving as a support engineer specializing in software development at Geocom. Expert in backend Python development, with extensive experience in Django and Django REST Framework, as well as proficiency in JavaScript frameworks like Vue and React for dynamic web applications. Skilled in mobile development using Dart and Flutter, with a solid understanding of AWS, Docker, cloud computing, and CI/CD services. Experienced in processing and analyzing geospatial data, leveraging critical thinking, quick learning, and problem-solving abilities to address engineering challenges. Currently expanding expertise in data science analytics with Numpy, Pandas, Scikit-learn and PyTorch , and always open to engaging discussions about Python, Django, React, Flutter, and SQL.
 
 <div>
   <img src="/assets/dev.svg" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
@@ -13,7 +13,7 @@ Geological Engineer, graduated from the Universidad de Oriente, Venezuela. Passi
 
 ## Tech Stack
 
-AWS (Amazon Web Services), Bootstrap, CSS, Django, Docker, Figma, Firebase, Git, HTML5, IFTTT, JavaScript, Kubernetes, Linux, SQL Server, MySQL, PostgreSQL, Python, React, Sass, Vue.js, VuePress, Adobe XD, Dart y Flutter.
+AWS (Amazon Web Services), Bootstrap, CSS, Django, Docker, Figma, Firebase, Git, HTML5, IFTTT, JavaScript, Kubernetes, Linux, SQL Server, MySQL, PostgreSQL, Python, PyTorch, React, Sass, Vue.js, VuePress, Adobe XD, Dart y Flutter.
 
 ## Contact
 
