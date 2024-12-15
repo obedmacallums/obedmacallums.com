@@ -1,6 +1,6 @@
 ---
 title: Essential Git Commands with Examples
-author: Your Name
+author: Obed Macallums
 pubDatetime: 2024-12-15T10:00:00Z
 slug: essential-git-commands
 description: A comprehensive guide to the most commonly used Git commands with examples to help you manage your repositories effectively.
