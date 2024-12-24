@@ -1,7 +1,7 @@
 ---
 author: Obed Macallums
 pubDatetime: 2024-12-24T00:00:00Z
-title: Advanced Git Commands - Power Tips for Developers
+title: "Advanced Git Commands: Power Tips for Developers"
 slug: advanced-git-commands
 featured: true
 tags:
