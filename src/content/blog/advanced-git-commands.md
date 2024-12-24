@@ -1,13 +1,14 @@
 ---
 author: Obed Macallums
 pubDatetime: 2024-12-24T00:00:00Z
-title: Advanced Git Commands: Power Tips for Developers
+title: Advanced Git Commands - Power Tips for Developers
 slug: advanced-git-commands
+featured: true
 tags:
   - git
   - version-control
-  - development
-description: A comprehensive guide to mastering advanced Git commands to optimize your development workflow.
+description: 
+  A comprehensive guide to mastering advanced Git commands to optimize your development workflow.
 ---
 
 # Advanced Git Commands: Power Tips for Developers
@@ -15,8 +16,6 @@ description: A comprehensive guide to mastering advanced Git commands to optimiz
 Version control is a cornerstone of modern software development, and Git stands out as the tool of choice for many teams. Beyond the basic commands like `git add` and `git commit`, there are powerful advanced features that can streamline your workflow. Here’s a guide to some of the most useful advanced Git commands.
 
 ## Table of Contents
-
----
 
 ## Interactive Rebase
 
