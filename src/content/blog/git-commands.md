@@ -15,13 +15,6 @@ Git is a powerful tool for version control and collaboration. This guide introdu
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Setting Up a Repository](#setting-up-a-repository)
-3. [Basic Commands](#basic-commands)
-4. [Branch Management](#branch-management)
-5. [Working with Remote Repositories](#working-with-remote-repositories)
-6. [Conclusion](#conclusion)
-
 ## Introduction
 
 Version control systems are essential for managing and tracking changes in projects, especially in software development. They allow teams to collaborate effectively, maintain a history of modifications, and ensure that previous versions of a project can be restored if needed. Git, one of the most popular version control systems, is widely used for its distributed architecture and robust feature set.
