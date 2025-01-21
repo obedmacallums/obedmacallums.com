@@ -2,9 +2,9 @@
 author: Obed Macallums
 pubDatetime: 2025-01-14T15:22:00Z
 modDatetime: 2025-01-14T15:22:00Z
-title: "Introduction to Pandas: A Beginner's Tutorial"
+title: "Introduction to Pandas"
 slug: introduction-to-pandas
-featured: true
+featured: false
 draft: false
 tags:
   - python

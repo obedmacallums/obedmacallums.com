@@ -7,7 +7,7 @@ description: A comprehensive guide to the most commonly used Git commands with e
 tags:
   - git
   - version-control
-featured: true
+featured: false
 draft: false
 ---
 
