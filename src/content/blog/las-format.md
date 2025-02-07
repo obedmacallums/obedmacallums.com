@@ -17,8 +17,6 @@ description:
 
 The **.LAS** and **.LAZ** formats are widely used in LiDAR data processing to store point cloud information. In this article, we explore the key features of these formats, their benefits, and how to work with them using the `laspy` library in Python.
 
-
-
 ## Table of Contents
 
 ## The .LAS Format
