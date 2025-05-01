@@ -29,7 +29,7 @@ A PLY file consists of a header followed by the data section. The header is in A
 
 ### Header Structure
 
-```
+```text
 ply
 format ascii 1.0
 element vertex 8
@@ -45,6 +45,7 @@ end_header
 ```
 
 This header example indicates:
+
 - The file is in ASCII format (version 1.0)
 - It contains 8 vertices, each with x, y, z coordinates and RGB color values
 - It contains 6 faces, each with a list of vertex indices defining the face
@@ -76,7 +77,7 @@ The PLY format offers two storage methods:
 
 ### ASCII PLY
 
-```
+```text
 ply
 format ascii 1.0
 element vertex 3
@@ -90,22 +91,26 @@ end_header
 ```
 
 **Advantages**:
+
 - Human-readable and easy to debug
 - Can be edited with a text editor
 - Platform-independent
 
 **Disadvantages**:
+
 - Larger file size
 - Slower to read and write
 
 ### Binary PLY
 
 **Advantages**:
+
 - Compact file size (typically 5-10x smaller than ASCII)
 - Faster to read and write
 - More efficient for large datasets
 
 **Disadvantages**:
+
 - Not human-readable
 - May have endianness issues between platforms
 
@@ -117,7 +122,7 @@ Several Python libraries support working with PLY files. Here we'll explore two 
 
 The `open3d` library provides comprehensive tools for working with 3D data.
 
-#### Installation
+#### Installing Open3D
 
 ```bash
 pip install open3d
