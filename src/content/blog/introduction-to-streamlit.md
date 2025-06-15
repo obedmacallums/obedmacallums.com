@@ -4,7 +4,7 @@ pubDatetime: 2025-06-15T16:30:00Z
 modDatetime: 2025-06-15T16:30:00Z
 title: "Introduction to Streamlit"
 slug: introduction-to-streamlit
-featured: false
+featured: true
 draft: false
 tags:
   - python

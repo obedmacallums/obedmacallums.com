@@ -5,7 +5,7 @@ pubDatetime: 2024-04-27T10:22:00Z
 modDatetime: 2024-04-27T10:00:00Z
 title: Getting Started with PyTorch
 slug: getting-started-with-pytorch
-featured: true
+featured: false
 draft: false
 tags:
     - pytorch

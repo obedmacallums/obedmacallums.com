@@ -8,7 +8,7 @@ tags:
   - opencv
   - computer-vision
   - machine-learning
-featured: false
+featured: true
 draft: false
 ---
 OpenCV is an open-source library for computer vision and machine learning, providing essential tools for image processing, object detection, and pattern recognition.

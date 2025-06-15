@@ -5,7 +5,7 @@ pubDatetime: 2024-05-10T10:00:00Z
 modDatetime: 2024-05-10T10:00:00Z
 title: Advanced Techniques in PyTorch
 slug: advanced-techniques-in-pytorch
-featured: true
+featured: false
 draft: false
 tags:
     - pytorch

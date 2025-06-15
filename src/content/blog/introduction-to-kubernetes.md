@@ -11,7 +11,7 @@ tags:
   - devops
   - cloud
   - architecture
-featured: false # Or true if you want it featured
+featured: true # Or true if you want it featured
 draft: false # Set to true if it's a draft
 ---
 

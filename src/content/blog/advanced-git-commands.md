@@ -3,7 +3,7 @@ author: Obed Macallums
 pubDatetime: 2024-12-24T00:00:00Z
 title: "Advanced Git Commands: Power Tips for Developers"
 slug: advanced-git-commands
-featured: true
+featured: false
 tags:
   - git
   - version-control
@@ -11,7 +11,7 @@ description:
   A comprehensive guide to mastering advanced Git commands to optimize your development workflow.
 ---
 
-# Advanced Git Commands: Power Tips for Developers
+## Advanced Git Commands: Power Tips for Developers
 
 Version control is a cornerstone of modern software development, and Git stands out as the tool of choice for many teams. Beyond the basic commands like `git add` and `git commit`, there are powerful advanced features that can streamline your workflow. Here’s a guide to some of the most useful advanced Git commands.
 
@@ -70,9 +70,11 @@ Squashing combines multiple commits into a single, cohesive unit, resulting in a
 To perform a squash during an interactive rebase:
 
 1. Run the command:
+
    ```bash
    git rebase -i HEAD~n
    ```
+
    Replace `n` with the number of recent commits you want to combine.
 2. In the interactive editor, mark the commits to be squashed by replacing `pick` with `squash` (or `s`).
 3. Edit the commit message to reflect the changes succinctly, combining details from the individual commits if necessary.
@@ -115,6 +117,6 @@ This performs garbage collection, cleaning up loose objects and optimizing the r
 
 ## Conclusion
 
-Mastering advanced Git commands allows developers to streamline their workflows and maintain a clean, efficient codebase. By utilizing features such as interactive rebase, stashing, and cherry-picking, you can resolve complex version control scenarios with ease. Additionally, tools like `git gc` and commit amending ensure your repository remains optimized and your changes are intentional. 
+Mastering advanced Git commands allows developers to streamline their workflows and maintain a clean, efficient codebase. By utilizing features such as interactive rebase, stashing, and cherry-picking, you can resolve complex version control scenarios with ease. Additionally, tools like `git gc` and commit amending ensure your repository remains optimized and your changes are intentional.
 
 Take time to explore and practice these commands in a safe environment to fully unlock their potential in your projects.

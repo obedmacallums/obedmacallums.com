@@ -3,7 +3,7 @@ author: Obed Macallums
 pubDatetime: 2024-10-10T10:00:00Z
 title: "Matplotlib Tutorial: A Comprehensive Guide"
 slug: matplotlib-tutorial
-featured: true
+featured: false
 draft: false
 tags:
   - matplotlib

@@ -8,7 +8,7 @@ tags:
     - python
     - pandas
     - data-analysis
-featured: true
+featured: false
 draft: false
 ---
 

@@ -3,7 +3,7 @@ author: Obed Macallums
 pubDatetime: 2025-01-02T00:00:00Z
 title: Introduction to NumPy Library
 slug: introduction-to-numpy
-featured: true
+featured: false
 draft: false
 tags:
   - Python

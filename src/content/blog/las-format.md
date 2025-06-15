@@ -3,7 +3,7 @@ author: Obed Macallums
 pubDatetime: 2025-01-10T10:21:00Z
 title: "Introduction to .LAS and .LAZ Point Cloud Formats"
 slug: las-laz-format
-featured: true
+featured: false
 draft: false
 tags:
   - laz
