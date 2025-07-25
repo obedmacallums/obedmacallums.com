@@ -3,7 +3,7 @@ author: Obed Macallums
 pubDatetime: 2025-07-25T14:30:00Z
 title: Gmail Templates from Drive - Chrome Extension
 slug: gmail-templates-from-drive-chrome-extension
-featured: true
+featured: false
 draft: false
 tags:
   - chrome-extension
