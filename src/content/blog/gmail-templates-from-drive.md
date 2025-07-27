@@ -148,6 +148,18 @@ The extension requires the following permissions to work:
 
 All permissions are used only for the extension's core functionality and your data remains private.
 
+## 🔒 Privacy Policy
+
+Your privacy and data security are our top priorities. Gmail Templates from Drive operates with **zero data collection** - we never collect, store, or transmit any of your personal data to our servers. All template processing happens exclusively on your device, and your data remains completely under your control.
+
+For complete details about how we protect your privacy, please review our comprehensive [Privacy Policy](/posts/gmail-templates-privacy-policy/).
+
+Key privacy highlights:
+- **100% Local Storage**: Everything stays on your device
+- **No Developer Access**: We cannot see or access your data
+- **Zero Data Collection**: We collect absolutely nothing
+- **Direct Google Connection**: Your device connects directly to Google APIs
+
 ---
 
 **Transform your Gmail workflow with professional templates at your fingertips!**
