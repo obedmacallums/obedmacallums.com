@@ -323,6 +323,9 @@
 
         async function initializeGoogleAPI() {
             try {
+                console.log('Initializing Google API with client ID:', GOOGLE_CLIENT_ID);
+                console.log('Current origin:', window.location.origin);
+                
                 await gapi.client.init({
                     apiKey: GOOGLE_API_KEY,
                     clientId: GOOGLE_CLIENT_ID,
@@ -346,8 +349,21 @@
                 
             } catch (error) {
                 console.error('Google API initialization error:', error);
-                showStatus('error', 'Failed to initialize Google APIs: ' + error.message);
+                
+                // Provide more specific error messages
+                let errorMessage = error.message || 'Unknown error';
+                
+                if (error.details && error.details.includes('Not a valid origin')) {
+                    errorMessage = `Origin authorization error: This page (${window.location.origin}) needs to be registered in Google Cloud Console for client ID ${GOOGLE_CLIENT_ID}. Please contact the administrator.`;
+                } else if (error.error === 'idpiframe_initialization_failed') {
+                    errorMessage = 'Google API initialization failed. This usually means the domain is not authorized in Google Cloud Console.';
+                }
+                
+                showStatus('error', errorMessage);
                 showLoading(false);
+                
+                // Show helpful instructions
+                showOriginError();
             }
         }
 
@@ -644,6 +660,53 @@
                     status.style.display = 'none';
                 }, 5000);
             }
+        }
+
+        function showOriginError() {
+            // Replace the normal steps with error information
+            document.body.innerHTML = `
+                <div style="max-width: 600px; margin: 40px auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                        <h1 style="color: #d73027;">Authorization Setup Required</h1>
+                    </div>
+                    
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 12px 0; color: #856404;">Configuration Needed</h3>
+                        <p style="margin: 0; color: #856404;">
+                            The domain <strong>${window.location.origin}</strong> needs to be registered in Google Cloud Console for the OAuth client.
+                        </p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 12px 0;">Required Setup Steps:</h3>
+                        <ol style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                            <li>Go to <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a></li>
+                            <li>Select your project</li>
+                            <li>Navigate to <strong>Credentials → OAuth 2.0 Client IDs</strong></li>
+                            <li>Edit client ID: <code style="background: #e9ecef; padding: 2px 6px; border-radius: 3px;">${GOOGLE_CLIENT_ID}</code></li>
+                            <li>Under <strong>Authorized JavaScript origins</strong>, add:<br>
+                                <code style="background: #e9ecef; padding: 2px 6px; border-radius: 3px; display: inline-block; margin: 4px 0;">${window.location.origin}</code>
+                            </li>
+                            <li>Under <strong>Authorized redirect URIs</strong>, add:<br>
+                                <code style="background: #e9ecef; padding: 2px 6px; border-radius: 3px; display: inline-block; margin: 4px 0;">${window.location.href.split('?')[0]}</code>
+                            </li>
+                            <li>Save the changes</li>
+                            <li>Wait 5-10 minutes for changes to propagate</li>
+                            <li>Refresh this page</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <button onclick="window.location.reload()" style="background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer;">
+                            Retry After Setup
+                        </button>
+                        <button onclick="window.close()" style="background: #5f6368; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; margin-left: 12px;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         // Make removeFolder available globally for onclick handlers
