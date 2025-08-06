@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Templates - Authorize Drive Folders</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: #4285f4;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            border-left: 4px solid #4285f4;
+        }
+        
+        .step h3 {
+            margin: 0 0 12px 0;
+            color: #4285f4;
+        }
+        
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background: #3367d6;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #5f6368;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 12px;
+        }
+        
+        .btn-secondary:hover {
+            background: #424242;
+        }
+        
+        .status {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .folder-list {
+            margin: 16px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .folder-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .folder-item:last-child {
+            border-bottom: none;
+        }
+        
+        .folder-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .folder-icon {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .folder-name {
+            font-weight: 500;
+        }
+        
+        .folder-path {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4285f4;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .security-note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .auth-complete {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .auth-complete .icon {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📧</div>
+        <h1>Gmail Templates</h1>
+        <p>Authorize access to your Google Drive folders</p>
+    </div>
+
+    <div class="security-note">
+        <strong>🔒 Security Notice:</strong> This page uses the secure drive.file scope, which only allows access to folders you explicitly authorize. Your other Drive files remain private.
+    </div>
+
+    <!-- Step 1: Initial Setup -->
+    <div id="step-setup" class="step">
+        <h3>Step 1: Connect to Google Drive</h3>
+        <p>Click the button below to sign in with your Google account and authorize folder access for Gmail Templates.</p>
+        <button id="authorize-btn" class="btn">Authorize Google Drive Access</button>
+    </div>
+
+    <!-- Step 2: Select Folders -->
+    <div id="step-select" class="step hidden">
+        <h3>Step 2: Select Template Folders</h3>
+        <p>Choose which folders contain your email templates. You can select multiple folders.</p>
+        <button id="pick-folders-btn" class="btn">Select Folders with Google Picker</button>
+        <button id="manual-add-btn" class="btn-secondary">Add Folder by ID</button>
+        
+        <div id="selected-folders" class="folder-list hidden">
+            <!-- Selected folders will appear here -->
+        </div>
+    </div>
+
+    <!-- Step 3: Complete -->
+    <div id="step-complete" class="step hidden">
+        <h3>Step 3: Authorization Complete</h3>
+        <div class="auth-complete">
+            <div class="icon">✅</div>
+            <p><strong>Success!</strong> Your folders have been authorized.</p>
+            <p>You can now close this page and return to the Gmail Templates extension.</p>
+            <button id="return-btn" class="btn">Return to Extension</button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Loading Google APIs...</p>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status" class="status"></div>
+
+    <!-- Manual folder input modal -->
+    <div id="manual-modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div style="background: white; padding: 24px; border-radius: 8px; max-width: 400px; width: 90%;">
+            <h3>Add Folder by ID</h3>
+            <p>Enter the Google Drive folder ID or URL:</p>
+            <input type="text" id="manual-folder-input" placeholder="Folder ID or Drive URL" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 12px 0;">
+            <div style="text-align: right; margin-top: 16px;">
+                <button id="manual-cancel-btn" class="btn-secondary">Cancel</button>
+                <button id="manual-confirm-btn" class="btn">Add Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const GOOGLE_API_KEY = 'AIzaSyBVU7rN9lMjw41uMEEM1EzSoZvJIWAmVbg';
+        const GOOGLE_CLIENT_ID = '1095330413845-m5om5a5amqsdcbpn16j129pfref3tm8c.apps.googleusercontent.com';
+        const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+        
+        // State management
+        let isGoogleAPILoaded = false;
+        let isAuthorized = false;
+        let selectedFolders = [];
+        let extensionParams = null;
+
+        // DOM elements
+        const stepSetup = document.getElementById('step-setup');
+        const stepSelect = document.getElementById('step-select');
+        const stepComplete = document.getElementById('step-complete');
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('status');
+        const authorizeBtn = document.getElementById('authorize-btn');
+        const pickFoldersBtn = document.getElementById('pick-folders-btn');
+        const manualAddBtn = document.getElementById('manual-add-btn');
+        const returnBtn = document.getElementById('return-btn');
+        const selectedFoldersDiv = document.getElementById('selected-folders');
+        const manualModal = document.getElementById('manual-modal');
+        const manualInput = document.getElementById('manual-folder-input');
+        const manualConfirmBtn = document.getElementById('manual-confirm-btn');
+        const manualCancelBtn = document.getElementById('manual-cancel-btn');
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            parseURLParameters();
+            loadGoogleAPIs();
+            bindEventListeners();
+        });
+
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            extensionParams = {
+                extensionId: urlParams.get('extensionId'),
+                sessionToken: urlParams.get('sessionToken'),
+                returnUrl: urlParams.get('returnUrl') || 'extension://invalid'
+            };
+            
+            console.log('Extension parameters:', extensionParams);
+            
+            if (!extensionParams.extensionId) {
+                showStatus('error', 'Missing extension parameters. Please access this page through the Gmail Templates extension.');
+                return;
+            }
+        }
+
+        function loadGoogleAPIs() {
+            showLoading(true);
+            
+            // Load Google APIs
+            const script = document.createElement('script');
+            script.src = 'https://apis.google.com/js/api.js';
+            script.onload = function() {
+                gapi.load('auth2:picker:client', initializeGoogleAPI);
+            };
+            script.onerror = function() {
+                showStatus('error', 'Failed to load Google APIs. Please check your internet connection.');
+                showLoading(false);
+            };
+            document.head.appendChild(script);
+        }
+
+        async function initializeGoogleAPI() {
+            try {
+                await gapi.client.init({
+                    apiKey: GOOGLE_API_KEY,
+                    clientId: GOOGLE_CLIENT_ID,
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                    scope: DRIVE_SCOPE
+                });
+
+                isGoogleAPILoaded = true;
+                showLoading(false);
+                
+                // Check if user is already signed in
+                const authInstance = gapi.auth2.getAuthInstance();
+                if (authInstance.isSignedIn.get()) {
+                    isAuthorized = true;
+                    showStep('select');
+                } else {
+                    showStep('setup');
+                }
+                
+                showStatus('info', 'Ready to authorize Google Drive access.');
+                
+            } catch (error) {
+                console.error('Google API initialization error:', error);
+                showStatus('error', 'Failed to initialize Google APIs: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        function bindEventListeners() {
+            authorizeBtn.addEventListener('click', handleAuthorization);
+            pickFoldersBtn.addEventListener('click', openGooglePicker);
+            manualAddBtn.addEventListener('click', openManualModal);
+            returnBtn.addEventListener('click', returnToExtension);
+            manualConfirmBtn.addEventListener('click', addManualFolder);
+            manualCancelBtn.addEventListener('click', closeManualModal);
+            
+            // Close modal when clicking outside
+            manualModal.addEventListener('click', function(e) {
+                if (e.target === manualModal) {
+                    closeManualModal();
+                }
+            });
+        }
+
+        async function handleAuthorization() {
+            if (!isGoogleAPILoaded) {
+                showStatus('error', 'Google APIs not loaded yet. Please wait.');
+                return;
+            }
+
+            try {
+                authorizeBtn.disabled = true;
+                authorizeBtn.textContent = 'Authorizing...';
+                
+                const authInstance = gapi.auth2.getAuthInstance();
+                const user = await authInstance.signIn();
+                
+                if (user.getAuthResponse().access_token) {
+                    isAuthorized = true;
+                    showStatus('success', 'Successfully authorized! Now you can select folders.');
+                    showStep('select');
+                } else {
+                    throw new Error('Authorization failed - no access token received');
+                }
+                
+            } catch (error) {
+                console.error('Authorization error:', error);
+                showStatus('error', 'Authorization failed: ' + error.message);
+            } finally {
+                authorizeBtn.disabled = false;
+                authorizeBtn.textContent = 'Authorize Google Drive Access';
+            }
+        }
+
+        function openGooglePicker() {
+            if (!isAuthorized) {
+                showStatus('error', 'Please authorize first.');
+                return;
+            }
+
+            const authInstance = gapi.auth2.getAuthInstance();
+            const user = authInstance.currentUser.get();
+            const authToken = user.getAuthResponse().access_token;
+
+            const picker = new google.picker.PickerBuilder()
+                .addView(google.picker.ViewId.FOLDERS)
+                .setOAuthToken(authToken)
+                .setCallback(handlePickerResult)
+                .setOrigin(window.location.protocol + '//' + window.location.host)
+                .build();
+
+            picker.setVisible(true);
+        }
+
+        function handlePickerResult(data) {
+            if (data.action === google.picker.Action.PICKED) {
+                const folders = data.docs;
+                
+                for (const folder of folders) {
+                    if (folder.mimeType === 'application/vnd.google-apps.folder') {
+                        addSelectedFolder({
+                            id: folder.id,
+                            name: folder.name,
+                            url: folder.url,
+                            iconUrl: folder.iconUrl
+                        });
+                    }
+                }
+                
+                updateFoldersDisplay();
+                
+                if (selectedFolders.length > 0) {
+                    showStatus('success', `Selected ${selectedFolders.length} folder(s). Click "Complete Authorization" when ready.`);
+                    showCompleteButton();
+                }
+            } else if (data.action === google.picker.Action.CANCEL) {
+                showStatus('info', 'Folder selection cancelled.');
+            }
+        }
+
+        function openManualModal() {
+            manualModal.classList.remove('hidden');
+            manualInput.focus();
+        }
+
+        function closeManualModal() {
+            manualModal.classList.add('hidden');
+            manualInput.value = '';
+        }
+
+        async function addManualFolder() {
+            const input = manualInput.value.trim();
+            if (!input) return;
+
+            try {
+                manualConfirmBtn.disabled = true;
+                manualConfirmBtn.textContent = 'Adding...';
+
+                let folderId = input;
+                
+                // Extract folder ID from Drive URL if needed
+                const urlMatch = input.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+                if (urlMatch) {
+                    folderId = urlMatch[1];
+                }
+
+                // Verify folder exists and get details
+                const response = await gapi.client.drive.files.get({
+                    fileId: folderId,
+                    fields: 'id,name,mimeType,webViewLink'
+                });
+
+                const folder = response.result;
+                
+                if (folder.mimeType !== 'application/vnd.google-apps.folder') {
+                    throw new Error('The specified ID is not a folder.');
+                }
+
+                addSelectedFolder({
+                    id: folder.id,
+                    name: folder.name,
+                    url: folder.webViewLink,
+                    iconUrl: null
+                });
+
+                updateFoldersDisplay();
+                closeManualModal();
+                
+                showStatus('success', `Added folder "${folder.name}"`);
+                
+                if (selectedFolders.length > 0) {
+                    showCompleteButton();
+                }
+                
+            } catch (error) {
+                console.error('Manual folder add error:', error);
+                showStatus('error', 'Failed to add folder: ' + error.message);
+            } finally {
+                manualConfirmBtn.disabled = false;
+                manualConfirmBtn.textContent = 'Add Folder';
+            }
+        }
+
+        function addSelectedFolder(folder) {
+            // Check if folder already exists
+            if (selectedFolders.some(f => f.id === folder.id)) {
+                showStatus('info', `Folder "${folder.name}" is already selected.`);
+                return;
+            }
+
+            selectedFolders.push(folder);
+        }
+
+        function updateFoldersDisplay() {
+            if (selectedFolders.length === 0) {
+                selectedFoldersDiv.classList.add('hidden');
+                return;
+            }
+
+            selectedFoldersDiv.classList.remove('hidden');
+            selectedFoldersDiv.innerHTML = selectedFolders.map(folder => `
+                <div class="folder-item">
+                    <div class="folder-info">
+                        <div class="folder-icon">📁</div>
+                        <div>
+                            <div class="folder-name">${folder.name}</div>
+                            <div class="folder-path">ID: ${folder.id}</div>
+                        </div>
+                    </div>
+                    <button onclick="removeFolder('${folder.id}')" class="btn-secondary">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFolder(folderId) {
+            selectedFolders = selectedFolders.filter(f => f.id !== folderId);
+            updateFoldersDisplay();
+            
+            if (selectedFolders.length === 0) {
+                hideCompleteButton();
+            }
+        }
+
+        function showCompleteButton() {
+            const existingBtn = document.getElementById('complete-auth-btn');
+            if (existingBtn) return;
+            
+            const completeBtn = document.createElement('button');
+            completeBtn.id = 'complete-auth-btn';
+            completeBtn.className = 'btn';
+            completeBtn.textContent = 'Complete Authorization';
+            completeBtn.style.marginTop = '16px';
+            completeBtn.addEventListener('click', completeAuthorization);
+            
+            stepSelect.appendChild(completeBtn);
+        }
+
+        function hideCompleteButton() {
+            const completeBtn = document.getElementById('complete-auth-btn');
+            if (completeBtn) {
+                completeBtn.remove();
+            }
+        }
+
+        async function completeAuthorization() {
+            if (selectedFolders.length === 0) {
+                showStatus('error', 'Please select at least one folder.');
+                return;
+            }
+
+            try {
+                const completeBtn = document.getElementById('complete-auth-btn');
+                completeBtn.disabled = true;
+                completeBtn.textContent = 'Completing...';
+
+                // Prepare authorization data
+                const authData = {
+                    folders: selectedFolders,
+                    timestamp: Date.now(),
+                    scope: DRIVE_SCOPE,
+                    sessionToken: extensionParams.sessionToken
+                };
+
+                // Send data back to extension via postMessage
+                const targetOrigin = extensionParams.returnUrl;
+                
+                // For Chrome extensions, we need to use a different approach
+                if (targetOrigin.startsWith('chrome-extension://')) {
+                    // Store data in localStorage for extension to retrieve
+                    const storageKey = `gmail-templates-auth-${extensionParams.extensionId}`;
+                    localStorage.setItem(storageKey, JSON.stringify(authData));
+                    
+                    showStatus('success', 'Authorization data prepared. Redirecting...');
+                } else {
+                    // For web pages, use postMessage
+                    window.parent.postMessage({
+                        type: 'gmail-templates-auth-complete',
+                        data: authData
+                    }, targetOrigin);
+                }
+
+                // Show completion step
+                showStep('complete');
+                
+            } catch (error) {
+                console.error('Complete authorization error:', error);
+                showStatus('error', 'Failed to complete authorization: ' + error.message);
+            }
+        }
+
+        function returnToExtension() {
+            // Close the page or redirect back to extension
+            if (extensionParams.returnUrl && !extensionParams.returnUrl.startsWith('extension://')) {
+                window.location.href = extensionParams.returnUrl;
+            } else {
+                window.close();
+            }
+        }
+
+        // Utility functions
+        function showStep(step) {
+            const steps = ['setup', 'select', 'complete'];
+            steps.forEach(s => {
+                document.getElementById(`step-${s}`).classList.toggle('hidden', s !== step);
+            });
+        }
+
+        function showLoading(show) {
+            loading.classList.toggle('hidden', !show);
+        }
+
+        function showStatus(type, message) {
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+            
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Make removeFolder available globally for onclick handlers
+        window.removeFolder = removeFolder;
+    </script>
+
+    <!-- Load Google Picker API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+</body>
+</html>
