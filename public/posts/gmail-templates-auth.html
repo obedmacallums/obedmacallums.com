@@ -308,49 +308,56 @@
         function loadGoogleAPIs() {
             showLoading(true);
             
-            // Load Google APIs
-            const script = document.createElement('script');
-            script.src = 'https://apis.google.com/js/api.js';
-            script.onload = function() {
-                gapi.load('auth2:picker:client', initializeGoogleAPI);
+            // Load Google Identity Services (new API)
+            const gsiScript = document.createElement('script');
+            gsiScript.src = 'https://accounts.google.com/gsi/client';
+            gsiScript.onload = function() {
+                // Load Google APIs for Picker
+                const apiScript = document.createElement('script');
+                apiScript.src = 'https://apis.google.com/js/api.js';
+                apiScript.onload = function() {
+                    gapi.load('picker', initializeGoogleAPI);
+                };
+                apiScript.onerror = function() {
+                    showStatus('error', 'Failed to load Google APIs. Please check your internet connection.');
+                    showLoading(false);
+                };
+                document.head.appendChild(apiScript);
             };
-            script.onerror = function() {
-                showStatus('error', 'Failed to load Google APIs. Please check your internet connection.');
+            gsiScript.onerror = function() {
+                showStatus('error', 'Failed to load Google Identity Services. Please check your internet connection.');
                 showLoading(false);
             };
-            document.head.appendChild(script);
+            document.head.appendChild(gsiScript);
         }
 
         async function initializeGoogleAPI() {
             try {
-                console.log('Initializing Google API with client ID:', GOOGLE_CLIENT_ID);
+                console.log('Initializing Google Identity Services with client ID:', GOOGLE_CLIENT_ID);
                 console.log('Current origin:', window.location.origin);
                 
+                // Initialize Google Identity Services
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleSignIn,
+                    auto_select: false,
+                    cancel_on_tap_outside: false
+                });
+
+                // Initialize Google API client for Drive API
                 await gapi.client.init({
                     apiKey: GOOGLE_API_KEY,
-                    clientId: GOOGLE_CLIENT_ID,
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                    scope: DRIVE_SCOPE
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                 });
 
                 isGoogleAPILoaded = true;
                 showLoading(false);
-                
-                // Check if user is already signed in
-                const authInstance = gapi.auth2.getAuthInstance();
-                if (authInstance.isSignedIn.get()) {
-                    isAuthorized = true;
-                    showStep('select');
-                } else {
-                    showStep('setup');
-                }
-                
+                showStep('setup');
                 showStatus('info', 'Ready to authorize Google Drive access.');
                 
             } catch (error) {
                 console.error('Google API initialization error:', error);
                 
-                // Provide more specific error messages
                 let errorMessage = error.message || 'Unknown error';
                 
                 if (error.details && error.details.includes('Not a valid origin')) {
@@ -361,9 +368,39 @@
                 
                 showStatus('error', errorMessage);
                 showLoading(false);
-                
-                // Show helpful instructions
                 showOriginError();
+            }
+        }
+
+        function handleGoogleSignIn(response) {
+            console.log('Google Sign-In response:', response);
+            if (response.credential) {
+                // Get access token for Drive API
+                requestAccessToken(response.credential);
+            }
+        }
+
+        async function requestAccessToken(idToken) {
+            try {
+                // Request access token with Drive scope
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: DRIVE_SCOPE,
+                    callback: (tokenResponse) => {
+                        console.log('Access token response:', tokenResponse);
+                        if (tokenResponse.access_token) {
+                            isAuthorized = true;
+                            window.accessToken = tokenResponse.access_token;
+                            showStatus('success', 'Successfully authorized! Now you can select folders.');
+                            showStep('select');
+                        }
+                    }
+                });
+                
+                tokenClient.requestAccessToken();
+            } catch (error) {
+                console.error('Access token request error:', error);
+                showStatus('error', 'Failed to get access token: ' + error.message);
             }
         }
 
@@ -393,39 +430,50 @@
                 authorizeBtn.disabled = true;
                 authorizeBtn.textContent = 'Authorizing...';
                 
-                const authInstance = gapi.auth2.getAuthInstance();
-                const user = await authInstance.signIn();
+                // Use Google Identity Services to get access token
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: DRIVE_SCOPE,
+                    callback: (tokenResponse) => {
+                        console.log('Access token response:', tokenResponse);
+                        if (tokenResponse.access_token) {
+                            isAuthorized = true;
+                            window.accessToken = tokenResponse.access_token;
+                            showStatus('success', 'Successfully authorized! Now you can select folders.');
+                            showStep('select');
+                        } else {
+                            showStatus('error', 'Authorization failed - no access token received');
+                        }
+                        authorizeBtn.disabled = false;
+                        authorizeBtn.textContent = 'Authorize Google Drive Access';
+                    },
+                    error_callback: (error) => {
+                        console.error('Authorization error:', error);
+                        showStatus('error', 'Authorization failed: ' + error.message);
+                        authorizeBtn.disabled = false;
+                        authorizeBtn.textContent = 'Authorize Google Drive Access';
+                    }
+                });
                 
-                if (user.getAuthResponse().access_token) {
-                    isAuthorized = true;
-                    showStatus('success', 'Successfully authorized! Now you can select folders.');
-                    showStep('select');
-                } else {
-                    throw new Error('Authorization failed - no access token received');
-                }
+                tokenClient.requestAccessToken();
                 
             } catch (error) {
                 console.error('Authorization error:', error);
                 showStatus('error', 'Authorization failed: ' + error.message);
-            } finally {
                 authorizeBtn.disabled = false;
                 authorizeBtn.textContent = 'Authorize Google Drive Access';
             }
         }
 
         function openGooglePicker() {
-            if (!isAuthorized) {
+            if (!isAuthorized || !window.accessToken) {
                 showStatus('error', 'Please authorize first.');
                 return;
             }
 
-            const authInstance = gapi.auth2.getAuthInstance();
-            const user = authInstance.currentUser.get();
-            const authToken = user.getAuthResponse().access_token;
-
             const picker = new google.picker.PickerBuilder()
                 .addView(google.picker.ViewId.FOLDERS)
-                .setOAuthToken(authToken)
+                .setOAuthToken(window.accessToken)
                 .setCallback(handlePickerResult)
                 .setOrigin(window.location.protocol + '//' + window.location.host)
                 .build();
@@ -484,6 +532,11 @@
                 if (urlMatch) {
                     folderId = urlMatch[1];
                 }
+
+                // Set the access token for API calls
+                gapi.client.setToken({
+                    access_token: window.accessToken
+                });
 
                 // Verify folder exists and get details
                 const response = await gapi.client.drive.files.get({
