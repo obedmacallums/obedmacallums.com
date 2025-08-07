@@ -211,10 +211,14 @@
 
     <!-- Step 2: Select Folders -->
     <div id="step-select" class="step hidden">
-        <h3>Step 2: Select Template Folders</h3>
-        <p>Choose which folders contain your email templates. You can select multiple folders.</p>
-        <button id="pick-folders-btn" class="btn">Select Folders with Google Picker</button>
-        <button id="manual-add-btn" class="btn-secondary">Add Folder by ID</button>
+        <h3>Step 2: Select Templates</h3>
+        <p>Choose your email templates. You can select entire folders or individual template files (HTML files or Google Docs). Use the different tabs in the picker:</p>
+        <ul style="margin: 12px 0; padding-left: 20px;">
+            <li><strong>Folders tab:</strong> Select entire folders to authorize all templates inside</li>
+            <li><strong>Documents tab:</strong> Select individual HTML files or Google Docs as templates</li>
+        </ul>
+        <button id="pick-folders-btn" class="btn">Select Templates with Google Picker</button>
+        <button id="manual-add-btn" class="btn-secondary">Add by ID</button>
         
         <div id="selected-folders" class="folder-list hidden">
             <!-- Selected folders will appear here -->
@@ -481,17 +485,25 @@
             }
 
             try {
-                const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+                // Create folder view for selecting template folders
+                const folderView = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
                     .setIncludeFolders(true)
                     .setSelectFolderEnabled(true);
 
+                // Create documents view for selecting individual template files
+                const docsView = new google.picker.DocsView()
+                    .setIncludeFolders(false)
+                    .setMimeTypes('text/html,application/vnd.google-apps.document');
+
                 const picker = new google.picker.PickerBuilder()
-                    .addView(view)
+                    .addView(folderView)
+                    .addView(docsView)
                     .setDeveloperKey(GOOGLE_API_KEY)
                     .setOAuthToken(window.accessToken)
                     .setCallback(handlePickerResult)
                     .setOrigin(window.location.protocol + '//' + window.location.host)
-                    .setSize(600, 425)
+                    .setSize(800, 500)
+                    .setTitle('Select Template Folders and Files')
                     .build();
 
                 picker.setVisible(true);
@@ -505,30 +517,53 @@
             console.log('Picker result:', data);
             
             if (data.action === google.picker.Action.PICKED) {
-                const folders = data.docs;
-                console.log('Selected folders:', folders);
+                const items = data.docs;
+                console.log('Selected items:', items);
                 
-                for (const folder of folders) {
-                    console.log('Processing folder:', folder);
-                    if (folder.mimeType === 'application/vnd.google-apps.folder') {
+                let foldersAdded = 0;
+                let filesAdded = 0;
+                
+                for (const item of items) {
+                    console.log('Processing item:', item);
+                    if (item.mimeType === 'application/vnd.google-apps.folder') {
+                        // It's a folder
                         addSelectedFolder({
-                            id: folder.id,
-                            name: folder.name,
-                            url: folder.url,
-                            iconUrl: folder.iconUrl
+                            id: item.id,
+                            name: item.name,
+                            url: item.url,
+                            iconUrl: item.iconUrl,
+                            type: 'folder'
                         });
+                        foldersAdded++;
+                    } else if (item.mimeType === 'text/html' || item.mimeType === 'application/vnd.google-apps.document') {
+                        // It's a template file
+                        addSelectedFolder({
+                            id: item.id,
+                            name: item.name,
+                            url: item.url,
+                            iconUrl: item.iconUrl,
+                            type: 'file',
+                            mimeType: item.mimeType
+                        });
+                        filesAdded++;
                     }
                 }
                 
                 updateFoldersDisplay();
                 
                 if (selectedFolders.length > 0) {
-                    showStatus('success', `Selected ${selectedFolders.length} folder(s). Click "Complete Authorization" when ready.`);
+                    let message = `Selected ${selectedFolders.length} item(s)`;
+                    if (foldersAdded > 0) message += ` (${foldersAdded} folders`;
+                    if (filesAdded > 0) message += `${foldersAdded > 0 ? ', ' : ' ('}${filesAdded} files`;
+                    if (foldersAdded > 0 || filesAdded > 0) message += ')';
+                    message += '. Click "Complete Authorization" when ready.';
+                    
+                    showStatus('success', message);
                     showCompleteButton();
                 }
             } else if (data.action === google.picker.Action.CANCEL) {
                 console.log('Picker cancelled');
-                showStatus('info', 'Folder selection cancelled.');
+                showStatus('info', 'Selection cancelled.');
             } else {
                 console.log('Picker action:', data.action);
             }
@@ -623,18 +658,24 @@
             }
 
             selectedFoldersDiv.classList.remove('hidden');
-            selectedFoldersDiv.innerHTML = selectedFolders.map(folder => `
+            selectedFoldersDiv.innerHTML = selectedFolders.map(item => {
+                const icon = item.type === 'folder' ? '📁' : 
+                           item.mimeType === 'application/vnd.google-apps.document' ? '📄' : '🌐';
+                const typeLabel = item.type === 'folder' ? 'Folder' : 'File';
+                
+                return `
                 <div class="folder-item">
                     <div class="folder-info">
-                        <div class="folder-icon">📁</div>
+                        <div class="folder-icon">${icon}</div>
                         <div>
-                            <div class="folder-name">${folder.name}</div>
-                            <div class="folder-path">ID: ${folder.id}</div>
+                            <div class="folder-name">${item.name}</div>
+                            <div class="folder-path">${typeLabel} ID: ${item.id}</div>
                         </div>
                     </div>
-                    <button onclick="removeFolder('${folder.id}')" class="btn-secondary">Remove</button>
+                    <button onclick="removeFolder('${item.id}')" class="btn-secondary">Remove</button>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function removeFolder(folderId) {
