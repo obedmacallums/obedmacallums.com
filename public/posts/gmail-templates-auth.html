@@ -312,11 +312,11 @@
             const gsiScript = document.createElement('script');
             gsiScript.src = 'https://accounts.google.com/gsi/client';
             gsiScript.onload = function() {
-                // Load Google APIs for Picker
+                // Load Google APIs for Picker and Client
                 const apiScript = document.createElement('script');
                 apiScript.src = 'https://apis.google.com/js/api.js';
                 apiScript.onload = function() {
-                    gapi.load('picker', initializeGoogleAPI);
+                    gapi.load('client:picker', initializeGoogleAPI);
                 };
                 apiScript.onerror = function() {
                     showStatus('error', 'Failed to load Google APIs. Please check your internet connection.');
@@ -336,19 +336,28 @@
                 console.log('Initializing Google Identity Services with client ID:', GOOGLE_CLIENT_ID);
                 console.log('Current origin:', window.location.origin);
                 
-                // Initialize Google Identity Services
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleGoogleSignIn,
-                    auto_select: false,
-                    cancel_on_tap_outside: false
-                });
+                // Wait for Google APIs to be fully loaded
+                if (!window.google || !window.gapi) {
+                    throw new Error('Google APIs not fully loaded');
+                }
 
                 // Initialize Google API client for Drive API
-                await gapi.client.init({
-                    apiKey: GOOGLE_API_KEY,
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                });
+                if (window.gapi.client) {
+                    await gapi.client.init({
+                        apiKey: GOOGLE_API_KEY,
+                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                    });
+                }
+
+                // Initialize Google Identity Services
+                if (window.google.accounts) {
+                    google.accounts.id.initialize({
+                        client_id: GOOGLE_CLIENT_ID,
+                        callback: handleGoogleSignIn,
+                        auto_select: false,
+                        cancel_on_tap_outside: false
+                    });
+                }
 
                 isGoogleAPILoaded = true;
                 showLoading(false);
@@ -534,9 +543,13 @@
                 }
 
                 // Set the access token for API calls
-                gapi.client.setToken({
-                    access_token: window.accessToken
-                });
+                if (window.gapi && window.gapi.client && window.accessToken) {
+                    gapi.client.setToken({
+                        access_token: window.accessToken
+                    });
+                } else {
+                    throw new Error('Google API client or access token not available');
+                }
 
                 // Verify folder exists and get details
                 const response = await gapi.client.drive.files.get({
