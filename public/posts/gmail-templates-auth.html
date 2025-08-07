@@ -695,7 +695,20 @@
                     const storageKey = `gmail-templates-auth-${extensionParams.extensionId}`;
                     localStorage.setItem(storageKey, JSON.stringify(authData));
                     
-                    showStatus('success', 'Authorization data prepared. Redirecting...');
+                    // Also try to send message directly to extension if possible
+                    try {
+                        if (chrome && chrome.runtime) {
+                            chrome.runtime.sendMessage(extensionParams.extensionId, {
+                                type: 'gmail-templates-auth-complete',
+                                data: authData
+                            });
+                            console.log('Sent message directly to extension');
+                        }
+                    } catch (extensionError) {
+                        console.log('Direct extension messaging not available:', extensionError);
+                    }
+                    
+                    showStatus('success', 'Authorization data prepared. You can now close this tab and return to the extension.');
                 } else {
                     // For web pages, use postMessage
                     window.parent.postMessage({
