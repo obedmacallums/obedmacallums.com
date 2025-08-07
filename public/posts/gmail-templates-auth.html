@@ -308,26 +308,21 @@
         function loadGoogleAPIs() {
             showLoading(true);
             
-            // Load Google Identity Services first
+            // Load Google Identity Services (new API)
             const gsiScript = document.createElement('script');
             gsiScript.src = 'https://accounts.google.com/gsi/client';
             gsiScript.onload = function() {
-                console.log('Google Identity Services loaded');
-                // Load Google APIs
-                if (!window.gapi) {
-                    const gapiScript = document.createElement('script');
-                    gapiScript.src = 'https://apis.google.com/js/api.js';
-                    gapiScript.onload = function() {
-                        console.log('GAPI loaded, now loading client and picker');
-                        gapi.load('client:picker', function() {
-                            console.log('Client and Picker loaded');
-                            initializeGoogleAPI();
-                        });
-                    };
-                    document.head.appendChild(gapiScript);
-                } else {
+                // Load Google APIs for Picker and Client
+                const apiScript = document.createElement('script');
+                apiScript.src = 'https://apis.google.com/js/api.js';
+                apiScript.onload = function() {
                     gapi.load('client:picker', initializeGoogleAPI);
-                }
+                };
+                apiScript.onerror = function() {
+                    showStatus('error', 'Failed to load Google APIs. Please check your internet connection.');
+                    showLoading(false);
+                };
+                document.head.appendChild(apiScript);
             };
             gsiScript.onerror = function() {
                 showStatus('error', 'Failed to load Google Identity Services. Please check your internet connection.');
@@ -485,42 +480,36 @@
                 return;
             }
 
-            if (!window.google || !google.picker) {
-                showStatus('error', 'Google Picker API not loaded.');
-                return;
-            }
-
             try {
-                console.log('Creating Google Picker with token:', window.accessToken);
-                
                 const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
-                    .setParent('root')
+                    .setIncludeFolders(true)
                     .setSelectFolderEnabled(true);
 
                 const picker = new google.picker.PickerBuilder()
-                    .enableFeature(google.picker.Feature.NAV_HIDDEN)
-                    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                    .setAppId('gmail-templates')
-                    .setOAuthToken(window.accessToken)
                     .addView(view)
+                    .setDeveloperKey(GOOGLE_API_KEY)
+                    .setOAuthToken(window.accessToken)
                     .setCallback(handlePickerResult)
                     .setOrigin(window.location.protocol + '//' + window.location.host)
-                    .setSize(1051, 650)
+                    .setSize(600, 425)
                     .build();
 
-                console.log('Showing picker');
                 picker.setVisible(true);
             } catch (error) {
-                console.error('Error creating picker:', error);
-                showStatus('error', 'Failed to create folder picker: ' + error.message);
+                console.error('Picker creation error:', error);
+                showStatus('error', 'Failed to open folder picker: ' + error.message);
             }
         }
 
         function handlePickerResult(data) {
+            console.log('Picker result:', data);
+            
             if (data.action === google.picker.Action.PICKED) {
                 const folders = data.docs;
+                console.log('Selected folders:', folders);
                 
                 for (const folder of folders) {
+                    console.log('Processing folder:', folder);
                     if (folder.mimeType === 'application/vnd.google-apps.folder') {
                         addSelectedFolder({
                             id: folder.id,
@@ -538,7 +527,10 @@
                     showCompleteButton();
                 }
             } else if (data.action === google.picker.Action.CANCEL) {
+                console.log('Picker cancelled');
                 showStatus('info', 'Folder selection cancelled.');
+            } else {
+                console.log('Picker action:', data.action);
             }
         }
 
@@ -805,5 +797,7 @@
         window.removeFolder = removeFolder;
     </script>
 
+    <!-- Load Google Picker API -->
+    <script src="https://apis.google.com/js/api.js"></script>
 </body>
 </html>
