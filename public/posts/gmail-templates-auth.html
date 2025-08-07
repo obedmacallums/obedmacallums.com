@@ -714,11 +714,14 @@
         }
 
         function returnToExtension() {
-            // Close the page or redirect back to extension
-            if (extensionParams.returnUrl && !extensionParams.returnUrl.startsWith('extension://')) {
-                window.location.href = extensionParams.returnUrl;
-            } else {
+            // Instead of redirecting, show instructions to close manually
+            showStatus('success', 'Authorization complete! You can now close this tab and return to the extension.');
+            
+            // Try to close the window (works if opened by window.open)
+            try {
                 window.close();
+            } catch (error) {
+                console.log('Cannot auto-close window:', error);
             }
         }
 
