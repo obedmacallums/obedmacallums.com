@@ -60,8 +60,17 @@ All commands run from project root:
 
 ### Adding Blog Posts
 1. Create new `.md` file in `src/content/blog/`
-2. Include required frontmatter: title, description, pubDatetime, tags
-3. Optional: featured (boolean), draft (boolean), ogImage, canonicalURL
+2. Include required frontmatter with ALL attributes from the template (see adding-new-post.md and las-format.md examples):
+   - `author`: Author name (e.g., "Obed Macallums")
+   - `pubDatetime`: Publication date in ISO 8601 format (e.g., "2025-01-10T10:21:00Z")
+   - `modDatetime`: Last modification date in ISO 8601 format (optional, for updated posts)
+   - `title`: Post title
+   - `slug`: URL slug (optional, auto-generated from title if not provided)
+   - `featured`: Boolean for featured status (true/false)
+   - `draft`: Boolean for draft status (true/false)
+   - `tags`: Array of relevant tags
+   - `description`: Detailed description of the post content
+3. Optional additional attributes: ogImage, canonicalURL
 4. Content supports standard markdown with remark plugins (TOC, collapse sections)
 
 ### Post Schema Requirements
@@ -116,6 +125,8 @@ The following blog posts are currently published on the site (not in draft statu
 • Matplotlib Tutorial: A Comprehensive Guide
 • Introduction to OpenCV: A Powerful Library for Computer Vision
 • Understanding the .PLY Point Cloud Format
+• Introduction to Django: Python's Powerful Web Framework
+• Introduction to Seaborn: Statistical Data Visualization in Python
 
 ## Blog Post Creation Guidelines
 
@@ -129,3 +140,7 @@ Simply add `## Table of Contents` anywhere in your markdown content to automatic
 
 ### Date Requirements
 When creating new blog posts, always use the current date in ISO 8601 format for the `pubDatetime` field in the frontmatter.
+
+### Post Creation Workflow
+
+After creating a new blog post, always ask if the "Current Published Posts" list in this CLAUDE.md file should be updated to include the new post title.
