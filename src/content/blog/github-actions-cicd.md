@@ -1,6 +1,6 @@
 ---
 author: Obed Macallums
-pubDatetime: 2025-01-12T15:30:00Z
+pubDatetime: 2025-09-12T15:30:00Z
 title: "CI/CD with GitHub Actions: Automated Testing and Deployment"
 slug: github-actions-cicd
 featured: false
