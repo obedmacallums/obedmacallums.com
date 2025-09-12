@@ -71,7 +71,8 @@ All commands run from project root:
    - `tags`: Array of relevant tags
    - `description`: Detailed description of the post content
 3. Optional additional attributes: ogImage, canonicalURL
-4. Content supports standard markdown with remark plugins (TOC, collapse sections)
+4. **IMPORTANT**: Frontmatter attributes must be in the exact order shown in `src/content/blog/adding-new-post.md`
+5. Content supports standard markdown with remark plugins (TOC, collapse sections)
 
 ### Post Schema Requirements
 - `pubDatetime` must be a valid Date
@@ -142,5 +143,7 @@ Simply add `## Table of Contents` anywhere in your markdown content to automatic
 When creating new blog posts, always use the current date in ISO 8601 format for the `pubDatetime` field in the frontmatter.
 
 ### Post Creation Workflow
+
+**IMPORTANT**: When asked to create a new blog post, ALWAYS read the files `src/content/blog/adding-new-post.md` and `src/content/blog/las-format.md` first to understand the proper structure, frontmatter format, and content organization before creating any new post.
 
 After creating a new blog post, always ask if the "Current Published Posts" list in this CLAUDE.md file should be updated to include the new post title.
