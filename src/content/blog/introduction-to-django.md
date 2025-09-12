@@ -1,6 +1,6 @@
 ---
+author: "Obed Macallums"
 title: "Introduction to Django: Python's Powerful Web Framework"
-author: "Obed MacCallums"
 pubDatetime: 2025-09-12T10:00:00Z
 slug: "introduction-to-django-python-web-framework"
 featured: false
