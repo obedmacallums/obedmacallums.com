@@ -94,3 +94,38 @@ Configure social links in `src/config.ts` SOCIALS array. Set `active: true` to d
 - Uses Astro's experimental content layer for improved content handling
 - Optimized for performance with Vite build optimizations
 - Excludes @resvg/resvg-js from Vite optimization due to binary dependencies
+
+## Current Published Posts
+
+The following blog posts are currently published on the site (not in draft status):
+
+• Getting Started with PyTorch
+• Advanced Git Commands: Power Tips for Developers
+• Advanced Pandas Techniques for Data Analysis
+• Advanced Techniques in PyTorch
+• Understanding Docker Basics: A Comprehensive Guide
+• Essential Git Commands with Examples
+• Gmail Templates from Drive - Chrome Extension
+• Privacy Policy - Gmail Templates from Drive
+• Introduction to NumPy Library
+• Introduction to FastAPI - Modern Python Web Framework
+• Introduction to Kubernetes: Orchestrating Containers at Scale
+• Introduction to Pandas
+• Introduction to Streamlit
+• Introduction to .LAS and .LAZ Point Cloud Formats
+• Matplotlib Tutorial: A Comprehensive Guide
+• Introduction to OpenCV: A Powerful Library for Computer Vision
+• Understanding the .PLY Point Cloud Format
+
+## Blog Post Creation Guidelines
+
+### Example Templates
+Use these files as templates when creating new blog posts:
+- `src/content/blog/adding-new-post.md` - Shows proper frontmatter structure and markdown formatting, it also shows all the attributes of a post.
+- `src/content/blog/las-format.md` - Example of a well-structured technical tutorial post
+
+### Table of Contents
+Simply add `## Table of Contents` anywhere in your markdown content to automatically generate a table of contents for that post.
+
+### Date Requirements
+When creating new blog posts, always use the current date in ISO 8601 format for the `pubDatetime` field in the frontmatter.
