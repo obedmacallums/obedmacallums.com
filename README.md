@@ -1,6 +1,7 @@
 # AstroPaper 📄
 
-![CI/CD Pipeline](https://github.com/obedmacallums/obedmacallums.com/workflows/CI%2FCD%20Pipeline/badge.svg)
+![CI](https://github.com/obedmacallums/obedmacallums.com/workflows/CI/badge.svg)
+![Deploy to GitHub Pages](https://github.com/obedmacallums/obedmacallums.com/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)
 
 ![AstroPaper](public/astropaper-og.jpg)
 [![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/community/file/1356898632249991861)
