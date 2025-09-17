@@ -128,6 +128,8 @@ The following blog posts are currently published on the site (not in draft statu
 • Understanding the .PLY Point Cloud Format
 • Introduction to Django: Python's Powerful Web Framework
 • Introduction to Seaborn: Statistical Data Visualization in Python
+• Machine Learning with Scikit-learn: A Comprehensive Guide
+• Building APIs with FastAPI vs Django: A Comprehensive Comparison
 • CI/CD with GitHub Actions: Automated Testing and Deployment
 
 ## Blog Post Creation Guidelines
