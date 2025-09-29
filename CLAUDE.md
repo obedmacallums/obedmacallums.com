@@ -131,6 +131,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Machine Learning with Scikit-learn: A Comprehensive Guide
 • Building APIs with FastAPI vs Django: A Comprehensive Comparison
 • CI/CD with GitHub Actions: Automated Testing and Deployment
+• Docker Compose: Orchestrating Multi-Container Applications
 
 ## Blog Post Creation Guidelines
 

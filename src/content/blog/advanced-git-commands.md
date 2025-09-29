@@ -4,10 +4,11 @@ pubDatetime: 2024-12-24T00:00:00Z
 title: "Advanced Git Commands: Power Tips for Developers"
 slug: advanced-git-commands
 featured: false
+draft: false
 tags:
   - git
   - version-control
-description: 
+description:
   A comprehensive guide to mastering advanced Git commands to optimize your development workflow.
 ---
 
