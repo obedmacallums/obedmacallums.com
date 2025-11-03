@@ -126,6 +126,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Matplotlib Tutorial: A Comprehensive Guide
 • Introduction to OpenCV: A Powerful Library for Computer Vision
 • Understanding the .PLY Point Cloud Format
+• Introduction to Plotly: Interactive Data Visualization in Python
 • Introduction to Django: Python's Powerful Web Framework
 • Introduction to Seaborn: Statistical Data Visualization in Python
 • Machine Learning with Scikit-learn: A Comprehensive Guide
