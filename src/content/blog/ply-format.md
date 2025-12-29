@@ -11,6 +11,7 @@ tags:
   - 3d
   - point-cloud
   - mesh
+  - gaussian-splatting
 description:
     A comprehensive introduction to the .PLY (Polygon File Format) used in 3D scanning and computer graphics, including its structure, benefits, and how to work with PLY files using the open3d and pyntcloud libraries in Python.
 ---
@@ -277,6 +278,10 @@ print(f"Downsampled point cloud has {len(downsampled.points)} points")
 # Save the downsampled point cloud
 o3d.io.write_point_cloud("downsampled.ply", downsampled)
 ```
+
+## PLY in 3D Gaussian Splatting
+
+The PLY format has become the de facto standard for [3D Gaussian Splatting](https://arxiv.org/abs/2308.04079), a revolutionary technique introduced by INRIA at SIGGRAPH 2023 that enables real-time rendering of photorealistic scenes from 2D images. In this context, PLY files store not only the position of each Gaussian point but also additional properties such as rotation quaternions, scale factors, opacity, and spherical harmonic coefficients for view-dependent color representation. This makes PLY an ideal choice for Gaussian Splatting due to its flexibility in storing custom properties. Tools like Polycam, Luma AI, and Nerfstudio generate PLY files as their primary output format for 3D Gaussian Splat scenes.
 
 ## Conclusion
 
