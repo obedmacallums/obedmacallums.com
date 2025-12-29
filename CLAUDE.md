@@ -133,6 +133,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Building APIs with FastAPI vs Django: A Comprehensive Comparison
 • CI/CD with GitHub Actions: Automated Testing and Deployment
 • Docker Compose: Orchestrating Multi-Container Applications
+• Point Cloud Registration with Open3D: A Complete Guide
 
 ## Blog Post Creation Guidelines
 
