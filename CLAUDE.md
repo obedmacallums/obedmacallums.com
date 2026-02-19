@@ -134,6 +134,7 @@ The following blog posts are currently published on the site (not in draft statu
 • CI/CD with GitHub Actions: Automated Testing and Deployment
 • Docker Compose: Orchestrating Multi-Container Applications
 • Point Cloud Registration with Open3D: A Complete Guide
+• Gaussian Splatting vs. Traditional Photogrammetry
 
 ## Blog Post Creation Guidelines
 
