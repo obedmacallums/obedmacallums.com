@@ -48,6 +48,20 @@ During training, an **adaptive density control** mechanism periodically splits G
 
 The key consequence of this design is **real-time novel view synthesis**: once trained, the scene can be rendered at dozens of frames per second by rasterizing the sorted Gaussians with alpha compositing — no ray marching, no neural network inference at render time. This makes 3DGS particularly attractive for interactive visualization, virtual production, and immersive experiences. It also handles complex visual phenomena like reflections and semi-transparency more gracefully than mesh-based texturing, since opacity and view-dependent color are first-class properties of the representation.
 
+### Storage and Delivery Formats
+
+One practical challenge with 3DGS is file size: a scene with millions of Gaussians stored as a standard `.ply` file can easily reach hundreds of megabytes. This has driven a wave of compressed formats designed for efficient storage and web delivery:
+
+- **Compressed PLY**: a simple quantized variant of the standard format, offering modest size reduction.
+- **SPZ** (open-sourced by Niantic): a more aggressive binary format, roughly 10× smaller than PLY.
+- **SOG** (Spatially Ordered Gaussians, by PlayCanvas): encodes Gaussian parameters as WebP images inside a ZIP archive, achieving 15–20× compression. Designed specifically for web delivery.
+
+The ecosystem is moving toward standardization: in 2025, Khronos and OGC announced a proposal to integrate Gaussian Splats into the **glTF** standard, which would make them a first-class interoperable 3D asset format across engines and tools.
+
+### Beyond Static Scenes
+
+The technique has also expanded beyond static reconstruction. **4D Gaussian Splatting** extends the representation to handle dynamic scenes — each Gaussian can change its parameters over time, enabling capture of moving subjects at real-time frame rates. This opens the door to applications in sports broadcast, volumetric video, and digital doubles for film production.
+
 ## Geometric Precision
 
 This is where photogrammetry still holds a clear advantage.
@@ -67,13 +81,15 @@ Photogrammetry builds geometry through **triangulation** — a mathematically gr
 
 ## Recent Advances in 3DGS
 
-In a short time, 3DGS has evolved rapidly:
+Since its introduction in 2023, 3DGS has evolved at a fast pace across several fronts.
 
-- **More efficient training algorithms** have reduced optimization time without sacrificing visual quality.
-- **Scene compression techniques** address the high memory footprint of storing millions of Gaussians.
-- **Hybrid methods** are beginning to extract usable geometry from the Gaussian representation, bridging the gap with photogrammetry.
+**Geometry extraction.** One of the original method's main weaknesses was the lack of clean, usable geometry. Two notable papers address this directly. **2DGS** (SIGGRAPH 2024) replaces 3D volumetric Gaussians with flat 2D disks that align naturally with surfaces, enabling accurate mesh extraction with much less noise. **SuGaR** (CVPR 2024) keeps standard 3D Gaussians but adds a regularization term that forces them to align with the scene surface during training, then extracts a mesh via Poisson reconstruction and optionally binds new Gaussians to the triangles for high-quality rendering — making the scene editable and animatable.
 
-Projects like **2D Gaussian Splatting** and **SuGaR** (Surface-Aligned Gaussian Splatting for Efficient 3D Mesh Reconstruction) demonstrate that the community is actively working toward methods that combine strong visual quality with recoverable geometry.
+**Large-scale rendering.** **FlashGS** (CVPR 2025) reworked the rasterization pipeline to sustain real-time performance on large outdoor scenes at 4K resolution. **Voyager** takes a different angle: a cloud-client architecture that streams only the Gaussians visible from the current viewpoint, achieving over 100× data reduction for city-scale mobile experiences.
+
+**Integration with generative models.** Methods like **PSHuman** and **PARTE** combine 3DGS with diffusion models to infer occluded regions and improve geometric detail, particularly useful for human reconstruction where full coverage from photos is rarely possible.
+
+**Standardization.** In August 2025, Khronos and OGC announced a proposal to add Gaussian Splats to the **glTF** ecosystem, signaling the transition from research artifact to production-ready interchange format.
 
 ## What Comes Next?
 
