@@ -135,6 +135,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Docker Compose: Orchestrating Multi-Container Applications
 • Point Cloud Registration with Open3D: A Complete Guide
 • Gaussian Splatting vs. Traditional Photogrammetry
+• Introduction to Django REST Framework: Building Modern APIs in Python
 
 ## Blog Post Creation Guidelines
 
