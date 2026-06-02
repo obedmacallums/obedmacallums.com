@@ -136,6 +136,8 @@ The following blog posts are currently published on the site (not in draft statu
 • Point Cloud Registration with Open3D: A Complete Guide
 • Gaussian Splatting vs. Traditional Photogrammetry
 • Introduction to Django REST Framework: Building Modern APIs in Python
+• Processing Point Clouds with PDAL
+• Introduction to Hugging Face Transformers
 
 ## Blog Post Creation Guidelines
 
