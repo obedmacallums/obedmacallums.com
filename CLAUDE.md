@@ -138,6 +138,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Introduction to Django REST Framework: Building Modern APIs in Python
 • Processing Point Clouds with PDAL
 • Introduction to Hugging Face Transformers
+• Fine-tuning LLMs with LoRA: A Practical Guide
 
 ## Blog Post Creation Guidelines
 
