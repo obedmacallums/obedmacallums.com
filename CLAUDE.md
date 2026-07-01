@@ -139,6 +139,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Processing Point Clouds with PDAL
 • Introduction to Hugging Face Transformers
 • Fine-tuning LLMs with LoRA: A Practical Guide
+• Semantic Segmentation of Point Clouds with PointNet++
 
 ## Blog Post Creation Guidelines
 
