@@ -141,6 +141,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Fine-tuning LLMs with LoRA: A Practical Guide
 • Semantic Segmentation of Point Clouds with PointNet++
 • Serving ML Models in Production with FastAPI + ONNX
+• COPC: Cloud Optimized Point Clouds for Streaming LiDAR
 
 ## Blog Post Creation Guidelines
 
