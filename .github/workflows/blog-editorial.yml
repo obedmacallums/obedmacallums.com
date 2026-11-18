@@ -29,8 +29,6 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    env:
-      EDITORIAL_DIR: ${{ runner.temp }}/blog-editorial
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -40,8 +38,10 @@ jobs:
       - name: Preparar catálogo y solicitud
         id: prepare
         env:
+          EDITORIAL_DIR: ${{ runner.temp }}/blog-editorial
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "EDITORIAL_DIR=$EDITORIAL_DIR" >> "$GITHUB_ENV"
           python3 -m venv "$EDITORIAL_DIR/venv"
           "$EDITORIAL_DIR/venv/bin/python" -m pip install --disable-pip-version-check PyYAML==6.0.3
           "$EDITORIAL_DIR/venv/bin/python" .github/scripts/blog_editorial.py prepare
