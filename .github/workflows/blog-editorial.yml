@@ -1,0 +1,89 @@
+name: Blog editorial con Codex
+
+on:
+  schedule:
+    - cron: "15 9 * * 1"
+      timezone: America/Santiago
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  editorial:
+    if: >-
+      (github.event_name != 'issue_comment' &&
+        github.ref_name == github.event.repository.default_branch) ||
+      (github.event_name == 'issue_comment' &&
+        !github.event.issue.pull_request &&
+        github.event.comment.user.id == github.event.repository.owner.id &&
+        github.event.issue.user.login == 'github-actions[bot]' &&
+        startsWith(github.event.issue.body, '<!-- blog-editorial:v1:'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: blog-editorial-${{ github.event.issue.number || github.run_id }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      EDITORIAL_DIR: ${{ runner.temp }}/blog-editorial
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Preparar catálogo y solicitud
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m venv "$EDITORIAL_DIR/venv"
+          "$EDITORIAL_DIR/venv/bin/python" -m pip install --disable-pip-version-check PyYAML==6.0.3
+          "$EDITORIAL_DIR/venv/bin/python" .github/scripts/blog_editorial.py prepare
+
+      - name: Comprobar credencial de OpenAI
+        if: steps.prepare.outputs.generate == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [[ -z "$OPENAI_API_KEY" ]]; then
+            echo "::error::Configura el secreto OPENAI_API_KEY para ejecutar Codex."
+            exit 1
+          fi
+
+      - name: Ejecutar Codex
+        if: steps.prepare.outputs.generate == 'true'
+        uses: openai/codex-action@306c6a196a99dcc6582530c396a19d2672d5e9ec # v1.14
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: gpt-6.2-sol
+          effort: medium
+          permission-profile: ":read-only"
+          prompt-file: ${{ env.EDITORIAL_DIR }}/prompt.txt
+          output-schema-file: ${{ env.EDITORIAL_DIR }}/schema.json
+          output-file: ${{ env.EDITORIAL_DIR }}/response.json
+          codex-args: '["--ephemeral"]'
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.prepare.outputs.build == 'true'
+        with:
+          node-version: "22"
+
+      - name: Verificar el borrador con Astro
+        if: steps.prepare.outputs.build == 'true'
+        run: |
+          npm ci
+          post="$("$EDITORIAL_DIR/venv/bin/python" .github/scripts/blog_editorial.py render)"
+          npm exec -- prettier --write "$post" --plugin=prettier-plugin-astro
+          npm run build
+
+      - name: Crear issue o abrir pull request
+        if: steps.prepare.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: '"$EDITORIAL_DIR/venv/bin/python" .github/scripts/blog_editorial.py publish'
