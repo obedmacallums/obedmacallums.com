@@ -2,7 +2,7 @@ name: "Blog: crear post desde sugerencia"
 
 # Se dispara cuando el dueño del repo responde a un issue con la etiqueta
 # `post-suggestions` (creado por `blog-post-suggestions.yml`) con el número
-# (1-5) o el título de una idea. Claude Opus 5.5 escribe el post siguiendo
+# (1-10) o el título de una idea. Claude Opus 5.5 escribe el post siguiendo
 # las normas del proyecto y el workflow abre un PR para revisión.
 
 on:
@@ -56,8 +56,8 @@ jobs:
           suggestions=$(echo "$data" | base64 -d | jq -c '.')
 
           choice=$(tr -d '[:space:]#.' <<< "$COMMENT")
-          if [[ "$choice" =~ ^[1-5]$ ]]; then
-            selected=$(jq -c ".[$((choice - 1))]" <<< "$suggestions")
+          if [[ "$choice" =~ ^([1-9]|10)$ ]]; then
+            selected=$(jq -c ".[$((choice - 1))] // empty" <<< "$suggestions")
           else
             selected=""
           fi
@@ -100,7 +100,8 @@ jobs:
 
             ## Selección
 
-            El issue #${{ github.event.issue.number }} propuso estas 5 ideas (JSON, en orden 1-5):
+            El issue #${{ github.event.issue.number }} propuso estas ideas (JSON, numeradas desde 1 en el orden de la lista;
+            `category` indica si es `related` o `trending`):
 
             ```json
             ${{ steps.pick.outputs.suggestions }}
@@ -116,9 +117,9 @@ jobs:
             ${{ steps.pick.outputs.selected }}
             ```
 
-            Si la sugerencia resuelta está vacía, decide a cuál de las 5 se refiere la respuesta
+            Si la sugerencia resuelta está vacía, decide a cuál de las ideas se refiere la respuesta
             (por número o por título aproximado). Si la respuesta NO se refiere claramente a una
-            de las 5 (por ejemplo, es un comentario cualquiera), NO crees ni modifiques ningún
+            de ellas (por ejemplo, es un comentario cualquiera), NO crees ni modifiques ningún
             archivo y termina.
 
             ## Normas obligatorias
@@ -147,6 +148,10 @@ jobs:
                - extensión similar a los tutoriales técnicos existentes (aprox. 1500-2500 palabras);
                - no inventes APIs, flags, versiones ni benchmarks: ante la duda, sé conservador
                  y usa APIs estables y ampliamente documentadas;
+               - si la idea es `trending` o usa herramientas/versiones recientes, verifica antes
+                 de escribir con WebSearch/WebFetch (documentación oficial, release notes y las
+                 `sources` de la idea) las versiones, comandos y APIs actuales, y cierra el post
+                 con una sección `## References` con los enlaces oficiales que usaste;
                - sin imágenes (la imagen OG se genera automáticamente).
             5. Agrega el título del nuevo post al final de la lista "Current Published Posts"
                de `CLAUDE.md`, con el mismo formato (`• Title`). No cambies nada más de ese archivo.
@@ -158,7 +163,7 @@ jobs:
             --model claude-opus-5-5
             --max-turns 80
             --permission-mode acceptEdits
-            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)"
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)"
 
       - name: "🔍 Detectar el post creado"
         id: post
@@ -237,7 +242,7 @@ jobs:
       - name: "🤷 Respuesta no reconocida"
         if: steps.post.outputs.created == 'false'
         run: |
-          gh issue comment "$ISSUE_NUMBER" --body "No pude identificar cuál de las 5 ideas elegiste, así que no se creó ningún post. Responde solo con el número (\`1\`–\`5\`) o con el título de la idea."
+          gh issue comment "$ISSUE_NUMBER" --body "No pude identificar cuál de las ideas elegiste, así que no se creó ningún post. Responde solo con el número (\`1\`–\`10\`) o con el título de la idea."
 
       - name: "❌ Avisar error"
         if: failure()

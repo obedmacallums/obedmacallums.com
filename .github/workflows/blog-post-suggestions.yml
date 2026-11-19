@@ -1,9 +1,10 @@
 name: "Blog: sugerencias semanales de posts"
 
 # Cada lunes (y a demanda) revisa los posts publicados y abre un issue con
-# 5 ideas de nuevos posts relacionados. Responder al issue con el número
-# (1-5) o el título dispara `blog-post-from-suggestion.yml`, que escribe
-# el post y abre un PR.
+# 10 ideas de nuevos posts: 5 relacionadas con los posts existentes y 5
+# basadas en tendencias actuales (investigadas en la web). Responder al issue
+# con el número (1-10) o el título dispara `blog-post-from-suggestion.yml`,
+# que escribe el post y abre un PR.
 
 on:
   schedule:
@@ -22,7 +23,7 @@ concurrency:
 jobs:
   suggest:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: "☁️ Checkout repository"
@@ -48,6 +49,7 @@ jobs:
             echo "titles<<$delimiter"
             echo "${previous:-(ninguna)}"
             echo "$delimiter"
+            echo "today=$(date -u +%Y-%m-%d)"
           } >> "$GITHUB_OUTPUT"
 
       - name: "🤖 Generar sugerencias con Claude"
@@ -59,66 +61,97 @@ jobs:
           prompt: |
             Eres el editor del blog técnico obedmacallums.com (Astro + AstroPaper).
             Los posts están en inglés y viven en `src/content/blog/*.md`.
+            Fecha de hoy: ${{ steps.previous.outputs.today }}.
 
-            Tarea: proponer 5 títulos para NUEVOS posts relacionados con los ya publicados.
+            Tarea: proponer 10 ideas para NUEVOS posts, en dos grupos de 5.
 
-            1. Revisa los posts publicados: lee el frontmatter (title, tags, description) de
-               cada archivo en `src/content/blog/`. Ignora los que tengan `draft: true`
-               (por ejemplo los de la plantilla AstroPaper). Puedes apoyarte en la lista
-               "Current Published Posts" de CLAUDE.md, pero los archivos mandan.
-            2. Identifica los temas fuertes del blog (Python/data science, ML, point clouds/LiDAR,
-               DevOps, web APIs, etc.) y propone 5 posts que:
-               - continúen o profundicen esos temas de forma natural (siguiente paso lógico,
-                 comparación, caso práctico, herramienta complementaria);
-               - NO dupliquen un post existente ni estas sugerencias previas:
+            ## Paso 1: conocer el blog
+            Lee el frontmatter (title, tags, description) de cada archivo en
+            `src/content/blog/`. Ignora los que tengan `draft: true` (por ejemplo los de
+            la plantilla AstroPaper). Puedes apoyarte en la lista "Current Published Posts"
+            de CLAUDE.md, pero los archivos mandan. Identifica los temas fuertes del blog
+            (Python/data science, ML/LLMs, point clouds/LiDAR/3D, DevOps, web APIs, etc.).
+
+            ## Paso 2: 5 ideas `related`
+            Ideas que continúen o profundicen los posts existentes de forma natural
+            (siguiente paso lógico, comparación, caso práctico, herramienta complementaria).
+            `sources` puede ir vacío.
+
+            ## Paso 3: 5 ideas `trending`
+            Usa WebSearch (y WebFetch si necesitas detalle) para investigar qué es tendencia
+            AHORA (aprox. últimos 3-6 meses) en las áreas del blog o cercanas: releases
+            importantes, herramientas o librerías emergentes con tracción, nuevas técnicas,
+            cambios en el ecosistema. Haz varias búsquedas, por ejemplo por cada tema fuerte.
+            Cada idea `trending` debe:
+            - ser algo realmente nuevo o en auge, no un tema clásico re-etiquetado;
+            - conectar con al menos un post existente (en `related_posts`), para que encaje
+              en el blog;
+            - incluir en `sources` 1-3 URLs reales que encontraste (anuncio oficial, docs,
+              release notes o artículo serio). No inventes URLs.
+
+            ## Reglas para las 10 ideas
+            - No dupliquen un post existente ni estas sugerencias previas:
             ${{ steps.previous.outputs.titles }}
-               - sean variados entre sí (no 5 sobre el mismo tema);
-               - sean prácticos y escribibles como tutorial técnico con código.
-            3. Para cada sugerencia entrega:
-               - `title`: título en inglés, al estilo de los existentes.
-               - `description`: 1-2 frases en inglés, usable como `description` del frontmatter.
-               - `tags`: 3-6 tags en minúscula, reutilizando tags existentes cuando aplique.
-               - `related_posts`: títulos de los posts existentes con los que se relaciona.
-               - `rationale`: en español, 1-2 frases de por qué encaja en el blog ahora.
+            - Variadas entre sí, prácticas y escribibles como tutorial técnico con código.
+            - Para cada una entrega:
+              - `category`: `related` o `trending`.
+              - `title`: título en inglés, al estilo de los existentes.
+              - `description`: 1-2 frases en inglés, usable como `description` del frontmatter.
+              - `tags`: 3-6 tags en minúscula, reutilizando tags existentes cuando aplique.
+              - `related_posts`: títulos de los posts existentes con los que se relaciona.
+              - `rationale`: en español, 1-2 frases de por qué encaja ahora (en las
+                `trending`, qué la hace tendencia).
+              - `sources`: URLs (obligatorias en `trending`).
 
             No modifiques ningún archivo. Responde solo con el JSON estructurado.
           claude_args: |
             --model claude-sonnet-5-5
-            --max-turns 40
+            --max-turns 60
             --permission-mode default
-            --allowedTools Read,Glob,Grep
-            --json-schema '{"type":"object","properties":{"suggestions":{"type":"array","minItems":5,"maxItems":5,"items":{"type":"object","properties":{"title":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"related_posts":{"type":"array","items":{"type":"string"}},"rationale":{"type":"string"}},"required":["title","description","tags","related_posts","rationale"],"additionalProperties":false}}},"required":["suggestions"],"additionalProperties":false}'
+            --allowedTools "Read,Glob,Grep,WebSearch,WebFetch"
+            --json-schema '{"type":"object","properties":{"suggestions":{"type":"array","minItems":10,"maxItems":10,"items":{"type":"object","properties":{"category":{"type":"string","enum":["related","trending"]},"title":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"related_posts":{"type":"array","items":{"type":"string"}},"rationale":{"type":"string"},"sources":{"type":"array","items":{"type":"string"}}},"required":["category","title","description","tags","related_posts","rationale","sources"],"additionalProperties":false}}},"required":["suggestions"],"additionalProperties":false}'
 
       - name: "📝 Crear issue con las sugerencias"
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ steps.claude.outputs.structured_output }}
         run: |
-          count=$(jq '.suggestions | length' <<< "$RESULT")
-          if [ "$count" -ne 5 ]; then
-            echo "::error::Se esperaban 5 sugerencias y llegaron $count"
+          # Ordena: primero las 5 `related` (1-5), luego las 5 `trending` (6-10).
+          suggestions=$(jq -c '.suggestions
+            | [.[] | select(.category == "related")] + [.[] | select(.category == "trending")]' <<< "$RESULT")
+          related=$(jq '[.[] | select(.category == "related")] | length' <<< "$suggestions")
+          trending=$(jq '[.[] | select(.category == "trending")] | length' <<< "$suggestions")
+          if [ "$related" -ne 5 ] || [ "$trending" -ne 5 ]; then
+            echo "::error::Se esperaban 5 related y 5 trending; llegaron $related y $trending"
             exit 1
           fi
 
           gh label create post-suggestions --color 5319e7 \
             --description "Ideas de posts generadas automáticamente" 2>/dev/null || true
 
+          render='def item:
+            "### \(.key + 1). \(.value.title)\n\n" +
+            "\(.value.description)\n\n" +
+            "- **Tags:** \(.value.tags | map("`" + . + "`") | join(", "))\n" +
+            (if (.value.related_posts | length) > 0
+              then "- **Relacionado con:** \(.value.related_posts | join(", "))\n" else "" end) +
+            "- **Por qué:** \(.value.rationale)\n" +
+            (if (.value.sources | length) > 0
+              then "- **Fuentes:** \(.value.sources | map("<" + . + ">") | join(" · "))\n" else "" end);
+          to_entries[] | select(.value.category == $cat) | item'
+
           today=$(date -u +%Y-%m-%d)
           body_file="$RUNNER_TEMP/issue-body.md"
           {
-            echo "## 📝 Ideas para el próximo post"
+            echo "👉 **Responde a este issue con el número (\`1\`–\`10\`) o el título** de la idea que quieras y se abrirá un PR con el post listo para revisar (escrito con Claude Opus 5.5)."
             echo
-            echo "Generadas a partir de los posts publicados actualmente."
+            echo "## 🔗 Relacionadas con tus posts"
             echo
-            echo "👉 **Responde a este issue con el número (\`1\`–\`5\`) o el título** de la idea que quieras y se abrirá un PR con el post listo para revisar (escrito con Claude Opus 5.5)."
+            jq -r --arg cat related "$render" <<< "$suggestions"
+            echo "## 🔥 Tendencias"
             echo
-            jq -r '.suggestions | to_entries[] |
-              "### \(.key + 1). \(.value.title)\n\n" +
-              "\(.value.description)\n\n" +
-              "- **Tags:** \(.value.tags | map("`" + . + "`") | join(", "))\n" +
-              "- **Relacionado con:** \(.value.related_posts | join(", "))\n" +
-              "- **Por qué:** \(.value.rationale)\n"' <<< "$RESULT"
-            echo "<!-- post-suggestions-data:$(jq -c '.suggestions' <<< "$RESULT" | base64 -w0) -->"
+            jq -r --arg cat trending "$render" <<< "$suggestions"
+            echo "<!-- post-suggestions-data:$(base64 -w0 <<< "$suggestions") -->"
           } > "$body_file"
 
           gh issue create \
