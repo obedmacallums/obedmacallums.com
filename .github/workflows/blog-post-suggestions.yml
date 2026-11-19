@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "0 13 * * 1" # Lunes 13:00 UTC (10:00 en Chile)
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Solo probar: generar ideas sin crear el issue"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -111,7 +116,20 @@ jobs:
             --allowedTools "Read,Glob,Grep,WebSearch,WebFetch"
             --json-schema '{"type":"object","properties":{"suggestions":{"type":"array","minItems":10,"maxItems":10,"items":{"type":"object","properties":{"category":{"type":"string","enum":["related","trending"]},"title":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"related_posts":{"type":"array","items":{"type":"string"}},"rationale":{"type":"string"},"sources":{"type":"array","items":{"type":"string"}}},"required":["category","title","description","tags","related_posts","rationale","sources"],"additionalProperties":false}}},"required":["suggestions"],"additionalProperties":false}'
 
+      - name: "🔐 Permisos denegados a Claude"
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          # La acción oculta el detalle en el log; aquí se muestra cada herramienta
+          # que Claude intentó usar sin permiso (para agregarla a --allowedTools).
+          jq -r '[.. | objects | select(.type? == "result") | .permission_denials[]?]
+            | if length == 0 then "Sin permisos denegados"
+              else .[] | "::warning title=Permiso denegado a Claude::\(.tool_name): \(.tool_input | tostring | .[0:300])"
+              end' "$EXECUTION_FILE" || true
+
       - name: "📝 Crear issue con las sugerencias"
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ steps.claude.outputs.structured_output }}

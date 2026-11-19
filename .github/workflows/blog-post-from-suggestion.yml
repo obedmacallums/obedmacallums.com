@@ -165,6 +165,18 @@ jobs:
             --permission-mode acceptEdits
             --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)"
 
+      - name: "🔐 Permisos denegados a Claude"
+        if: always() && steps.claude.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          # La acción oculta el detalle en el log; aquí se muestra cada herramienta
+          # que Claude intentó usar sin permiso (para agregarla a --allowedTools).
+          jq -r '[.. | objects | select(.type? == "result") | .permission_denials[]?]
+            | if length == 0 then "Sin permisos denegados"
+              else .[] | "::warning title=Permiso denegado a Claude::\(.tool_name): \(.tool_input | tostring | .[0:300])"
+              end' "$EXECUTION_FILE" || true
+
       - name: "🔍 Detectar el post creado"
         id: post
         run: |
