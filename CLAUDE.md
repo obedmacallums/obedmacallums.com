@@ -142,6 +142,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Semantic Segmentation of Point Clouds with PointNet++
 • Serving ML Models in Production with FastAPI + ONNX
 • COPC: Cloud Optimized Point Clouds for Streaming LiDAR
+• Deploying a FastAPI Application to Kubernetes with GitHub Actions
 
 ## Blog Post Creation Guidelines
 
