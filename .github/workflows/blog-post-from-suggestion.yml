@@ -158,7 +158,7 @@ jobs:
             --model claude-opus-5-5
             --max-turns 80
             --permission-mode acceptEdits
-            --allowedTools Read,Write,Edit,Glob,Grep,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)"
 
       - name: "🔍 Detectar el post creado"
         id: post
@@ -182,6 +182,8 @@ jobs:
         env:
           POST_FILE: ${{ steps.post.outputs.file }}
         run: |
+          # Respaldo por si Claude no alcanzó a formatear el post.
+          npx prettier --write "$POST_FILE" --plugin=prettier-plugin-astro
           npx prettier --check "$POST_FILE" --plugin=prettier-plugin-astro
           npm run build
 
