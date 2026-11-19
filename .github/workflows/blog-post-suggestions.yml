@@ -76,6 +76,8 @@ jobs:
             la plantilla AstroPaper). Puedes apoyarte en la lista "Current Published Posts"
             de CLAUDE.md, pero los archivos mandan. Identifica los temas fuertes del blog
             (Python/data science, ML/LLMs, point clouds/LiDAR/3D, DevOps, web APIs, etc.).
+            Para revisar los posts usa Grep, Glob y Read (por ejemplo, Grep de
+            `^(title|draft|tags):` sobre `src/content/blog/`); Bash no está disponible.
 
             ## Paso 2: 5 ideas `related`
             Ideas que continúen o profundicen los posts existentes de forma natural
