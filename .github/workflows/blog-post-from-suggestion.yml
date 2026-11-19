@@ -1,0 +1,243 @@
+name: "Blog: crear post desde sugerencia"
+
+# Se dispara cuando el dueño del repo responde a un issue con la etiqueta
+# `post-suggestions` (creado por `blog-post-suggestions.yml`) con el número
+# (1-5) o el título de una idea. Claude Opus 5.5 escribe el post siguiendo
+# las normas del proyecto y el workflow abre un PR para revisión.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: blog-post-from-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  create-post:
+    # Solo issues (no PRs) de sugerencias, solo comentarios del dueño y sin
+    # @claude (eso lo atiende claude.yml).
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'post-suggestions') &&
+      github.event.comment.author_association == 'OWNER' &&
+      !contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+    steps:
+      - name: "👀 Confirmar recepción"
+        run: |
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes > /dev/null || true
+
+      - name: "🎯 Resolver la sugerencia elegida"
+        id: pick
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT: ${{ github.event.comment.body }}
+        run: |
+          data=$(grep -oP '<!-- post-suggestions-data:\K[A-Za-z0-9+/=]+' <<< "$ISSUE_BODY" | head -n1 || true)
+          if [ -z "$data" ]; then
+            echo "::error::El issue no contiene los datos de las sugerencias"
+            exit 1
+          fi
+          suggestions=$(echo "$data" | base64 -d | jq -c '.')
+
+          choice=$(tr -d '[:space:]#.' <<< "$COMMENT")
+          if [[ "$choice" =~ ^[1-5]$ ]]; then
+            selected=$(jq -c ".[$((choice - 1))]" <<< "$suggestions")
+          else
+            selected=""
+          fi
+
+          delimiter="EOF_$(openssl rand -hex 8)"
+          {
+            echo "suggestions<<$delimiter"
+            jq '.' <<< "$suggestions"
+            echo "$delimiter"
+            echo "selected<<$delimiter"
+            if [ -n "$selected" ]; then jq '.' <<< "$selected"; fi
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+          echo "now=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: "☁️ Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: "🔧 Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: "npm"
+
+      - name: "📦 Install dependencies"
+        run: npm ci
+
+      - name: "✍️ Escribir el post con Claude Opus 5.5"
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Eres el autor técnico del blog obedmacallums.com (Astro + AstroPaper).
+            Vas a escribir UN post nuevo, en inglés, listo para publicarse vía PR.
+
+            ## Selección
+
+            El issue #${{ github.event.issue.number }} propuso estas 5 ideas (JSON, en orden 1-5):
+
+            ```json
+            ${{ steps.pick.outputs.suggestions }}
+            ```
+
+            El autor del blog respondió:
+
+            > ${{ github.event.comment.body }}
+
+            Sugerencia resuelta automáticamente (vacío = no se pudo resolver por número):
+
+            ```json
+            ${{ steps.pick.outputs.selected }}
+            ```
+
+            Si la sugerencia resuelta está vacía, decide a cuál de las 5 se refiere la respuesta
+            (por número o por título aproximado). Si la respuesta NO se refiere claramente a una
+            de las 5 (por ejemplo, es un comentario cualquiera), NO crees ni modifiques ningún
+            archivo y termina.
+
+            ## Normas obligatorias
+
+            1. Antes de escribir, lee `CLAUDE.md`, `src/content/blog/adding-new-post.md` y
+               `src/content/blog/las-format.md`, y sigue sus normas.
+            2. Lee los posts listados en `related_posts` para igualar estilo, tono y profundidad,
+               y para no repetir su contenido. Puedes enlazarlos como `/posts/<slug>/`
+               (usa el `slug` de su frontmatter).
+            3. Crea `src/content/blog/<slug>.md`, con el frontmatter en este orden exacto:
+               - `author: Obed Macallums`
+               - `pubDatetime: ${{ steps.pick.outputs.now }}`
+               - `title:` el título elegido, entre comillas dobles
+               - `slug:` kebab-case corto y único (verifica que ningún post lo use ya);
+                 el nombre del archivo debe ser `<slug>.md`
+               - `featured: false`
+               - `draft: false`
+               - `tags:` los sugeridos (ajústalos si hace falta), en minúscula, como lista YAML
+               - `description:` basada en la sugerencia
+               No incluyas `modDatetime`, `ogImage` ni `canonicalURL`.
+            4. Contenido:
+               - párrafo de introducción y luego `## Table of Contents`;
+               - secciones con `##`/`###` (nunca `#`), un tutorial práctico con bloques de
+                 código con lenguaje indicado, correctos y coherentes entre sí;
+               - una sección final `## Conclusion`;
+               - extensión similar a los tutoriales técnicos existentes (aprox. 1500-2500 palabras);
+               - no inventes APIs, flags, versiones ni benchmarks: ante la duda, sé conservador
+                 y usa APIs estables y ampliamente documentadas;
+               - sin imágenes (la imagen OG se genera automáticamente).
+            5. Agrega el título del nuevo post al final de la lista "Current Published Posts"
+               de `CLAUDE.md`, con el mismo formato (`• Title`). No cambies nada más de ese archivo.
+            6. Formatea con `npx prettier --write src/content/blog/<slug>.md` y verifica que
+               `npm run build` termine sin errores; si falla, corrige el post.
+            7. No modifiques ningún otro archivo. No hagas commits, push, ramas ni PRs:
+               el workflow se encarga de eso.
+          claude_args: |
+            --model claude-opus-5-5
+            --max-turns 80
+            --permission-mode acceptEdits
+            --allowedTools Read,Write,Edit,Glob,Grep,Bash(npx prettier:*),Bash(npm run build),Bash(git status:*),Bash(git diff:*)
+
+      - name: "🔍 Detectar el post creado"
+        id: post
+        run: |
+          file=$(git status --porcelain --untracked-files=all -- src/content/blog \
+            | awk '$1 == "??" && $2 ~ /\.md$/ { print $2 }' | head -n1)
+          if [ -z "$file" ]; then
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          title=$(grep -m1 '^title:' "$file" | sed -E "s/^title:[[:space:]]*//; s/^[\"']//; s/[\"'][[:space:]]*\$//")
+          {
+            echo "created=true"
+            echo "file=$file"
+            echo "slug=$(basename "$file" .md)"
+            echo "title=$title"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "✅ Verificar formato y build"
+        if: steps.post.outputs.created == 'true'
+        env:
+          POST_FILE: ${{ steps.post.outputs.file }}
+        run: |
+          npx prettier --check "$POST_FILE" --plugin=prettier-plugin-astro
+          npm run build
+
+      - name: "🚀 Commit, push y PR"
+        if: steps.post.outputs.created == 'true'
+        env:
+          POST_FILE: ${{ steps.post.outputs.file }}
+          POST_SLUG: ${{ steps.post.outputs.slug }}
+          POST_TITLE: ${{ steps.post.outputs.title }}
+        run: |
+          branch="post/${POST_SLUG}"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null 2>&1; then
+            branch="${branch}-${GITHUB_RUN_NUMBER}"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          git checkout -b "$branch"
+          git add "$POST_FILE"
+          git add CLAUDE.md || true
+          git commit \
+            -m "add: include new blog post on ${POST_TITLE}" \
+            -m "Closes #${ISSUE_NUMBER}" \
+            -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+          git push -u origin "$branch"
+
+          body_file="$RUNNER_TEMP/pr-body.md"
+          {
+            echo "## Nuevo post: ${POST_TITLE}"
+            echo
+            echo "- Archivo: \`${POST_FILE}\`"
+            echo "- URL al publicar: https://obedmacallums.com/posts/${POST_SLUG}/"
+            echo "- Origen: sugerencia del issue #${ISSUE_NUMBER}"
+            echo "- \`CLAUDE.md\`: agregado a \"Current Published Posts\""
+            echo
+            echo "Formato (Prettier) y \`npm run build\` verificados en el workflow."
+            echo
+            echo "Closes #${ISSUE_NUMBER}"
+            echo
+            echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+          } > "$body_file"
+
+          pr_url=$(gh pr create --base main --head "$branch" \
+            --title "add: new blog post — ${POST_TITLE}" \
+            --body-file "$body_file")
+
+          gh issue comment "$ISSUE_NUMBER" --body "✅ Post listo para revisar: ${pr_url}"
+
+      - name: "🤷 Respuesta no reconocida"
+        if: steps.post.outputs.created == 'false'
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "No pude identificar cuál de las 5 ideas elegiste, así que no se creó ningún post. Responde solo con el número (\`1\`–\`5\`) o con el título de la idea."
+
+      - name: "❌ Avisar error"
+        if: failure()
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "❌ Falló la creación del post. Revisa el log: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -1,0 +1,127 @@
+name: "Blog: sugerencias semanales de posts"
+
+# Cada lunes (y a demanda) revisa los posts publicados y abre un issue con
+# 5 ideas de nuevos posts relacionados. Responder al issue con el número
+# (1-5) o el título dispara `blog-post-from-suggestion.yml`, que escribe
+# el post y abre un PR.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Lunes 13:00 UTC (10:00 en Chile)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+concurrency:
+  group: blog-post-suggestions
+  cancel-in-progress: false
+
+jobs:
+  suggest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: "☁️ Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: "🗂️ Recolectar sugerencias anteriores"
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Títulos sugeridos en los últimos issues, para no repetirlos.
+          previous=$(
+            gh issue list --label post-suggestions --state all --limit 8 \
+              --json body --jq '.[].body' 2>/dev/null \
+            | grep -oP '<!-- post-suggestions-data:\K[A-Za-z0-9+/=]+' \
+            | while read -r data; do echo "$data" | base64 -d | jq -r '.[].title'; done \
+            || true
+          )
+          delimiter="EOF_$(openssl rand -hex 8)"
+          {
+            echo "titles<<$delimiter"
+            echo "${previous:-(ninguna)}"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "🤖 Generar sugerencias con Claude"
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Eres el editor del blog técnico obedmacallums.com (Astro + AstroPaper).
+            Los posts están en inglés y viven en `src/content/blog/*.md`.
+
+            Tarea: proponer 5 títulos para NUEVOS posts relacionados con los ya publicados.
+
+            1. Revisa los posts publicados: lee el frontmatter (title, tags, description) de
+               cada archivo en `src/content/blog/`. Ignora los que tengan `draft: true`
+               (por ejemplo los de la plantilla AstroPaper). Puedes apoyarte en la lista
+               "Current Published Posts" de CLAUDE.md, pero los archivos mandan.
+            2. Identifica los temas fuertes del blog (Python/data science, ML, point clouds/LiDAR,
+               DevOps, web APIs, etc.) y propone 5 posts que:
+               - continúen o profundicen esos temas de forma natural (siguiente paso lógico,
+                 comparación, caso práctico, herramienta complementaria);
+               - NO dupliquen un post existente ni estas sugerencias previas:
+            ${{ steps.previous.outputs.titles }}
+               - sean variados entre sí (no 5 sobre el mismo tema);
+               - sean prácticos y escribibles como tutorial técnico con código.
+            3. Para cada sugerencia entrega:
+               - `title`: título en inglés, al estilo de los existentes.
+               - `description`: 1-2 frases en inglés, usable como `description` del frontmatter.
+               - `tags`: 3-6 tags en minúscula, reutilizando tags existentes cuando aplique.
+               - `related_posts`: títulos de los posts existentes con los que se relaciona.
+               - `rationale`: en español, 1-2 frases de por qué encaja en el blog ahora.
+
+            No modifiques ningún archivo. Responde solo con el JSON estructurado.
+          claude_args: |
+            --model claude-sonnet-5-5
+            --max-turns 40
+            --permission-mode default
+            --allowedTools Read,Glob,Grep
+            --json-schema '{"type":"object","properties":{"suggestions":{"type":"array","minItems":5,"maxItems":5,"items":{"type":"object","properties":{"title":{"type":"string"},"description":{"type":"string"},"tags":{"type":"array","items":{"type":"string"}},"related_posts":{"type":"array","items":{"type":"string"}},"rationale":{"type":"string"}},"required":["title","description","tags","related_posts","rationale"],"additionalProperties":false}}},"required":["suggestions"],"additionalProperties":false}'
+
+      - name: "📝 Crear issue con las sugerencias"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          count=$(jq '.suggestions | length' <<< "$RESULT")
+          if [ "$count" -ne 5 ]; then
+            echo "::error::Se esperaban 5 sugerencias y llegaron $count"
+            exit 1
+          fi
+
+          gh label create post-suggestions --color 5319e7 \
+            --description "Ideas de posts generadas automáticamente" 2>/dev/null || true
+
+          today=$(date -u +%Y-%m-%d)
+          body_file="$RUNNER_TEMP/issue-body.md"
+          {
+            echo "## 📝 Ideas para el próximo post"
+            echo
+            echo "Generadas a partir de los posts publicados actualmente."
+            echo
+            echo "👉 **Responde a este issue con el número (\`1\`–\`5\`) o el título** de la idea que quieras y se abrirá un PR con el post listo para revisar (escrito con Claude Opus 5.5)."
+            echo
+            jq -r '.suggestions | to_entries[] |
+              "### \(.key + 1). \(.value.title)\n\n" +
+              "\(.value.description)\n\n" +
+              "- **Tags:** \(.value.tags | map("`" + . + "`") | join(", "))\n" +
+              "- **Relacionado con:** \(.value.related_posts | join(", "))\n" +
+              "- **Por qué:** \(.value.rationale)\n"' <<< "$RESULT"
+            echo "<!-- post-suggestions-data:$(jq -c '.suggestions' <<< "$RESULT" | base64 -w0) -->"
+          } > "$body_file"
+
+          gh issue create \
+            --title "📝 Ideas de posts — semana del $today" \
+            --label post-suggestions \
+            --body-file "$body_file"
