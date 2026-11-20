@@ -143,6 +143,7 @@ The following blog posts are currently published on the site (not in draft statu
 • Serving ML Models in Production with FastAPI + ONNX
 • COPC: Cloud Optimized Point Clouds for Streaming LiDAR
 • Deploying a FastAPI Application to Kubernetes with GitHub Actions
+• Rendering 3D Gaussian Splats in Open3D 0.20
 
 ## Blog Post Creation Guidelines
 
