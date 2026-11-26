@@ -144,6 +144,7 @@ The following blog posts are currently published on the site (not in draft statu
 • COPC: Cloud Optimized Point Clouds for Streaming LiDAR
 • Deploying a FastAPI Application to Kubernetes with GitHub Actions
 • Rendering 3D Gaussian Splats in Open3D 0.20
+• Agent Skills Meet MCP: Exposing Your Python Tools as Reusable Skills
 
 ## Blog Post Creation Guidelines
 
